@@ -1,0 +1,28 @@
+# Default PathSnap Candidate Generation & Route Alignment Configuration
+
+dataset:
+  default_relative_root: "../Student folder"
+  env_var: "PATHSNAP_DATA_ROOT"
+  partitions:
+    train: "train"
+    student_test: "student_test"
+
+candidate_generation:
+  search_radius_m: 100.0
+  max_candidates_k: 10
+  enable_fallback_nearest: true
+  fallback_max_radius_m: 500.0
+
+feature_engineering:
+  min_displacement_for_bearing_m: 2.5
+  max_valid_delta_time_s: 30.0
+  max_plausible_speed_mps: 65.0
+
+route_alignment:
+  alignment_emission_sigma_m: 15.0
+  alignment_bearing_weight: 5.0
+  alignment_skip_penalty_per_arc: 1.5
+  alignment_length_mismatch_weight: 0.25
+  alignment_max_confident_distance_m: 50.0
+  alignment_max_unmatched_distance_m: 120.0
+  alignment_ambiguity_margin_m: 3.0

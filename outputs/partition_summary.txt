@@ -1,0 +1,22 @@
+PathSnap dataset EDA summary
+Data root: C:\Users\lgoku\Downloads\PathSnap_Dataset\Student folder
+
+train: 80 trips
+  total gps_observations: 208417
+  total road_nodes: 1933485
+  total road_arcs: 3876904
+  total reference_route_arcs: 31336
+  trips with gaps > 1.5s: 60
+  trips with invalid GPS rows: 0
+  mean reference-route connectivity: 0.99935
+  maximum timestamp gap: 153064.000s
+
+student_test: 10 trips
+  total gps_observations: 19160
+  total road_nodes: 90689
+  total road_arcs: 185041
+  total reference_route_arcs: 3477
+  trips with gaps > 1.5s: 6
+  trips with invalid GPS rows: 0
+  mean reference-route connectivity: 0.99973
+  maximum timestamp gap: 210.000s
