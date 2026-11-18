@@ -28,8 +28,9 @@ From `C:\Users\Pranav S Atreya\PES\sem5\ML\hackathon\PathSnap-Map-Matching` in P
 # 1. Point to the raw dataset root
 $env:PATHSNAP_DATA_ROOT="C:\Users\Pranav S Atreya\PES\sem5\ML\hackathon\Student folder\Student folder"
 
-# 2. Run the full automated pytest suite (10 tests: data loader, spatial, alignment, labels, graph, Viterbi)
-.\.venv\Scripts\python.exe -m pytest -q
+# 2. Run the full automated pytest suite safely (11 tests: data loader, spatial/kinematics, alignment, labels, graph, Viterbi)
+$env:PYTHONDONTWRITEBYTECODE="1"
+.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
 
 # 3. Generate dataset inventory (90 trips), sensitivity analysis (10 trips), and 5-trip Parquet previews + alignment map
 .\.venv\Scripts\python.exe scripts/run_audit_and_previews.py

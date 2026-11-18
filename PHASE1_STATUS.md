@@ -1,7 +1,7 @@
 # PathSnap — Phase 1 Status & Milestone Checklist
 
-**Branch:** `feature/pranav-ml` (synced with `origin/main` commit `4ba8528`)  
-**Phase 1 Evaluation Readiness:** **READY (10/10 Pytest Tests Passing, All Phase 1 CSVs, Plots & Folium Maps Generated)**
+**Branch:** `feature/pranav-ml` (synced with `origin/main` commit `0067754`, ahead of `origin/main` commit `b30153f` with Phase 1 documentation and kinematics validation)
+**Phase 1 Evaluation Readiness:** **READY (11/11 Pytest Tests Passing, All Phase 1 CSVs, Plots & Folium Maps Generated and Reconciled)**
 
 ---
 
@@ -10,20 +10,20 @@
 - [x] **Team Integration Verified (`origin/main`):**
   - Integrated L A Gokul's dataset ingestion (`src/data_loader.py`), integrity auditing (`src/eda.py`), and static/Folium visualisations (`src/visualization.py`, `outputs/trip_map.html`).
   - Integrated Qamar Ahmed's WGS84 tangent projection, `STRtree` spatial candidate generation, 11 causal features, monotonic DP route alignment, and `TripRoadGraph` (`src/pathsnap/`).
-- [x] **Editable Package & Full Automated Test Suite (`10/10 Passed`):**
+- [x] **Editable Package & Full Automated Test Suite (`11/11 Passed`):**
   - Installed `pathsnap` in `.venv` via `python -m pip install -e . --no-deps`.
-  - All 8 existing unit tests + 2 new deterministic Viterbi unit tests (`tests/test_viterbi_decoder.py`) pass (`10 passed in 8.73s`).
+  - All 8 original unit tests + 1 new kinematics gap/timestamp unit test (`tests/test_candidate_generation.py`) + 2 deterministic Viterbi unit tests (`tests/test_viterbi_decoder.py`) pass (`11 passed in 9.34s`).
 - [x] **Candidate Preview Generation & Schema Audit (`scripts/run_audit_and_previews.py`):**
   - Executed across all 80 training and 10 student-testing trips for inventory (`data/dataset_inventory.csv`), 10-trip sensitivity analysis (`data/sensitivity_analysis.csv`), and 5-trip Parquet candidate/observation extraction (`outputs/candidate_previews/candidates.parquet`, `observations.parquet`).
   - Confirmed 20 candidate columns, 11 predictive features (`CANDIDATE_FEATURE_COLUMNS`), `Int8` nullable labels, `0.1978%` candidate miss rate (`21 / 10,618` aligned observations), and zero identifier leakage.
-- [x] **Preliminary Five-Model Experiment (`src/models/model_pipeline.py`):**
+- [x] **Preliminary Five-Model Experiment (`src/models/model_pipeline.py` — 5-Trip Pilot):**
   - Trained and evaluated **Logistic Regression**, **Distance-Weighted KNN**, **Decision Tree**, **Random Forest**, and **HistGradientBoosting** using 5-fold `GroupKFold(n_splits=5)` grouped by `trip_id` across the 5 representative training trips (`92,299` labeled rows).
   - Saved full results to `results/phase1/model_comparison.csv` and `results/phase1/cv_results.csv`.
-- [x] **Genuine Bayesian Hyperparameter Optimisation (`src/optimization/bayesian_tuning.py`):**
+- [x] **Genuine Bayesian Hyperparameter Optimisation (`src/optimization/bayesian_tuning.py` — 5-Trip Pilot):**
   - Executed 8-trial **Optuna `TPESampler`** Bayesian search over `HistGradientBoostingClassifier` using 5-fold `GroupKFold` (`results/phase1/bayesian_trials.csv`, saved pilot artifact `artifacts/phase1_pilot_tuned_hgb.joblib`).
-- [x] **HMM / Viterbi Route Reconstruction (`src/sequence/viterbi_decoder.py`):**
+- [x] **HMM / Viterbi Route Reconstruction (`src/sequence/viterbi_decoder.py` — Synthetic + 5-Trip OOF Pilot):**
   - Implemented log-domain Viterbi decoder integrating ML emission probabilities with `TripRoadGraph` topological transitions (`0`-hop same arc, `1`-hop direct successor, `2..3`-hop bridge, disconnected backoff, U-turn penalty, empty candidate carry-forward, and large GPS gap relaxation).
-  - Verified on both synthetic test cases and real 5-trip out-of-fold ML probabilities (`results/phase1/hmm_test_results.csv`), improving Trip `00000001` HGB Top-1 accuracy from **`75.36%` to `93.31%`** (`+17.95%`) and Logistic Regression 5-trip aggregate Top-1 accuracy from **`65.00%` to `84.99%`** (`+19.98%`) with **`97.09%` route continuity**.
+  - Verified on both synthetic test cases and real 5-trip out-of-fold ML probabilities (`results/phase1/hmm_test_results.csv`), improving Trip `00000001` HGB Top-1 accuracy from **`75.36%` to `93.31%`** (`+17.95%`), Logistic Regression 5-trip aggregate Top-1 accuracy from **`65.00%` to `84.99%`** (`+19.98%`) with **`97.09%` route continuity**, and honestly documenting the Trip `00000002` HGB calibration trade-off (`47.45%` $\to$ `43.75%` Top-1 accuracy while continuity rises `83.87%` $\to$ `96.09%`).
 - [x] **Interactive Folium Maps Ready for Demo:**
   - `outputs/trip_map.html` (Gokul's raw trajectory + road network + reference route overview)
   - `outputs/candidate_previews/trip_00000001_alignment_map.html` (Qamar's candidate network + monotonic reference alignment status map)

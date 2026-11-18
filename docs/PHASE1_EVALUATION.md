@@ -42,11 +42,11 @@ Full statistics across all 90 trips are recorded in [`data/dataset_inventory.csv
 1. **`.track` (3 columns, whitespace-separated, no header):** `longitude` (`float64`), `latitude` (`float64`), `timestamp_s` (`float64`).
    - **Audit:** $262$ to $19,313$ observations per trip (median $1,496.5$). Mean proportion of exact $1.0\text{ s}$ intervals is $94.32\%$ (median $97.6\%$), confirming nominal $1\text{ Hz}$ sampling. However, $47 / 90$ trips have time gaps $> 5\text{ s}$ and $30 / 90$ trips have gaps $> 30\text{ s}$ (max gap $153,064\text{ s}$).
 2. **`.nodes` (2 columns, whitespace-separated, no header):** `longitude` (`float64`), `latitude` (`float64`). Row index ($0 \dots N_{\text{nodes}}-1$) is the trip-specific `node_id`.
-   - **Audit:** $369$ to $163,991$ nodes per trip; zero isolated nodes across all 90 trips.
+   - **Audit:** $299$ to $155,003$ nodes per trip (median $9,305.0$; total $2,024,174$ nodes across 90 trips); zero isolated nodes across all 90 trips.
 3. **`.arcs` (2 integer columns, whitespace-separated, no header):** `from_node_id`, `to_node_id` (`int32`). Row index ($0 \dots N_{\text{arcs}}-1$) is the trip-specific directed `arc_id`.
    - **Audit:** $649$ to $307,392$ directed arcs per trip (median $18,761.5$). Every node reference is valid ($0$ out-of-bounds references).
 4. **`.route` (1 integer column, no header):** Chronological sequence of traversed `arc_id` values (`int32`).
-   - **Audit:** $48$ to $1,558$ route segments per trip. Crucially, `len(.track) != len(.route)` in every trip, and $36 / 90$ trips contain repeated `arc_id` occurrences (loops/U-turns). Across all 90 trips, only 14 transitions in `.route` are non-adjacent in the node graph.
+   - **Audit:** $59$ to $2,266$ route segments per trip (median $272.5$; total $34,813$ segments across 90 trips). Crucially, `len(.track) != len(.route)` in every trip, and $10 / 90$ trips ($9$ in `train`, $1$ in `student_test`, totalling $322$ repeated segment occurrences) traverse the same `arc_id` multiple times (loops/U-turns). Across all 90 trips ($34,723$ transitions), only $14$ transitions in `.route` ($13$ in `train`, $1$ in `student_test`) are non-adjacent in the node graph.
 
 ---
 
@@ -69,7 +69,7 @@ All 11 features in `CANDIDATE_FEATURE_COLUMNS` are strictly causal (no look-ahea
 7. `gps_bearing_deg` (nullable `Float32` $\in [0, 360)^\circ$): Causal GPS trajectory azimuth ($i-1 \to i$). Set to `<NA>` at $i=0$, when $\Delta t_i \le 0$, $\Delta t_i > 30\text{ s}$, or when step displacement $< 2.5\text{ m}$ (stationary noise).
 8. `bearing_difference_deg` (nullable `Float32` $\in [0, 180]^\circ$): Unsigned angular difference between GPS bearing and road bearing.
 9. `gps_speed_mps` (nullable `Float32`): Causal speed $\Delta d_i / \Delta t_i$ in $\text{m/s}$ (`<NA>` when $\Delta t_i \le 0$, $\Delta t_i > 30\text{ s}$, or speed $> 65\text{ m/s}$).
-10. `delta_time_s` (nullable `Float32`): Elapsed time $t_i - t_{i-1}$ in seconds (`<NA>` at $i=0$).
+10. `delta_time_s` (nullable `Float32`): Elapsed time $t_i - t_{i-1}$ in seconds (`<NA>` at $i=0$ or when $\Delta t_i \le 0$; retains positive gap durations $> 30\text{ s}$ so models/decoders can detect GPS dropouts).
 11. `is_fallback_candidate` (`bool`): `True` if retrieved via nearest-segment fallback when zero segments existed within `search_radius_m`.
 
 ---
@@ -77,9 +77,11 @@ All 11 features in `CANDIDATE_FEATURE_COLUMNS` are strictly causal (no look-ahea
 ## 6. Candidate-Generation Strategy & Sensitivity Analysis
 
 - Indexed per trip with **`Shapely 2.x STRtree`** over metric road `LineString` geometries.
-- Empirical sensitivity analysis across 10 training trips ($23,178$ observations, saved in [`data/sensitivity_analysis.csv`](../data/sensitivity_analysis.csv)) shows:
-  - $R = 30\text{ m}, K = 5$: Miss rate $= 3.524\%$ (recall $96.476\%$).
-  - **$R = 100\text{ m}, K = 10$ (Selected Default):** Miss rate $= \mathbf{0.270\%}$ (recall $\mathbf{99.730\%}$), average $8.48$ candidates/observation, positive class ratio $11.26\%$.
+- Empirical sensitivity analysis across 10 training trips ($23,178$ observations, $22,193$ aligned, saved in [`data/sensitivity_analysis.csv`](../data/sensitivity_analysis.csv)) shows:
+  - $R = 30\text{ m}, K = 5$: Miss rate $= 3.524\%$ ($782$ misses, recall $96.476\%$).
+  - $R = 50\text{ m}, K = 10$: Miss rate $= 0.2704\%$ ($60$ misses, recall $99.730\%$), average $7.08$ candidates/observation, positive class ratio $13.49\%$.
+  - **$R = 100\text{ m}, K = 10$ (Selected Default):** Miss rate $= \mathbf{0.2704\%}$ ($60$ misses, recall $\mathbf{99.730\%}$), average $8.48$ candidates/observation, positive class ratio $11.26\%$.
+  - *Why $R=50\text{ m}$ and $R=100\text{ m}$ have identical miss counts ($60$) at $K=10$, and why $R=100\text{ m}$ is chosen:* Because `alignment_max_confident_distance_m = 50.0 m`, every `"aligned"` observation has its reference arc at distance $\le 50\text{ m}$; thus the $60$ misses at $K=10$ are purely rank-cap misses (where $>10$ dense urban intersection segments lie closer than the reference arc). However, setting $R=100\text{ m}$ retains connected successor candidates during $30\text{--}80\text{ m}$ urban GPS canyon drift for downstream Viterbi decoding without triggering single-segment fallback (`510` observations in the 5-trip preview have minimum road distance $> 50\text{ m}$, vs only `271` exceeding $100\text{ m}$).
 
 ---
 
