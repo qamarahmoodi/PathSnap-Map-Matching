@@ -44,6 +44,8 @@ def resolve_data_root(data_root: Optional[str | Path] = None) -> Path:
     candidates.extend([
         cwd / ".." / "Student folder",
         cwd / "Student folder",
+        cwd / ".." / "PathSnap_Dataset" / "Student folder",
+        cwd / ".." / "PathSnap_Dataset",
         Path(__file__).resolve().parents[4] / "Student folder",
     ])
 
