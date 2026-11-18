@@ -1,6 +1,6 @@
 # PathSnap — Distributed GPS Map-Matching & Route Reconstruction
 
-**Course:** UE24CS352A Machine Learning Hackathon (PES University)  
+**Course:** UE24CS352A Machine Learning Hackathon (PES University)
 **Team Members:**
 - **Qamar Ahmed (**PES2UG24CS904**) (Technical Lead):** Spatial projection (`LocalTangentProjector`), `Shapely 2.x STRtree` candidate generation, causal feature engineering, monotonic DP reference alignment, `TripRoadGraph`.
 - **Pranav Shashikiran Atreya (**PES2UG24CS912**) (ML Engineering):** Five-model `GroupKFold` training & comparison pipeline, Optuna TPE Bayesian hyperparameter optimisation, HMM & Viterbi route reconstruction.
@@ -81,10 +81,10 @@ PathSnap-Map-Matching/
 
 ---
 
-## 3. Reproducing All Outputs & Tests
+## 3. Reproducing All Outputs, Phase 2 Inference & FastAPI Server
 
 ```powershell
-# 1. Run the automated test suite (11 tests covering loader, projection, candidates, DP alignment, labels, graph, and Viterbi)
+# 1. Run the automated test suite (26 tests covering loader, projection, candidates, DP alignment, labels, graph, Viterbi, inference, and FastAPI)
 python -m pytest -v
 
 # 2. Run dataset audit (90 trips), candidate sensitivity analysis (10 trips), and candidate previews
@@ -92,4 +92,10 @@ python scripts/run_audit_and_previews.py
 
 # 3. Run 5-model GroupKFold CV, Optuna TPE Bayesian tuning, and HMM/Viterbi route reconstruction
 python scripts/run_phase1_ml_pipeline.py
+
+# 4. Run Phase 2 route-free inference and isolated server evaluation across all 10 student_test trips
+python scripts/run_phase2_inference_and_handoff.py
+
+# 5. Start the Laptop 1 FastAPI Backend Server (accessible over LAN from Laptop 2)
+python -m uvicorn pathsnap.api.app:app --app-dir src --host 0.0.0.0 --port 8000
 ```

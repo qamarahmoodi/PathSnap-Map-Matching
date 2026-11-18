@@ -26,3 +26,31 @@ route_alignment:
   alignment_max_confident_distance_m: 50.0
   alignment_max_unmatched_distance_m: 120.0
   alignment_ambiguity_margin_m: 3.0
+
+viterbi_decoder:
+  prob_floor: 1.0e-6
+  emission_weight: 1.0
+  normalize_emissions_within_obs: false
+  same_arc_log_prob: -0.15
+  direct_successor_log_prob: -0.60
+  two_hop_log_prob: -2.20
+  three_hop_log_prob: -3.80
+  disconnected_log_prob: -10.50
+  reverse_arc_penalty: -4.00
+  length_mismatch_penalty_per_m: 0.015
+  large_gap_threshold_s: 10.0
+  reset_gap_threshold_s: 60.0
+  max_hops: 3
+
+inference:
+  default_model_path: "artifacts/best_model.joblib"
+  fallback_model_path: "artifacts/phase1_pilot_tuned_hgb.joblib"
+  env_model_path: "PATHSNAP_MODEL_PATH"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  default_eval_partition: "student_test"
+  evaluator_partition_name: "evaluator_test"
+  allow_cors_origins:
+    - "*"

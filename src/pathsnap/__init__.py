@@ -37,6 +37,17 @@ from pathsnap.alignment.label_generation import (
     attach_alignment_labels,
     summarize_trip_labels,
 )
+from pathsnap.inference import (
+    CandidateModelScorer,
+    ScoredCandidatesResult,
+    ServerEvaluationResult,
+    TripInferenceOutput,
+    arcs_to_segments_latlon,
+    compute_sequence_overlap_metrics,
+    evaluate_trip_predictions_server_side,
+    resolve_model_path,
+    run_trip_inference,
+)
 
 __all__ = [
     "CANDIDATE_FEATURE_COLUMNS",
