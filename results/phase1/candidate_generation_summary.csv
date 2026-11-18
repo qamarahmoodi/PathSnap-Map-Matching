@@ -1,0 +1,6 @@
+trip_id,total_observations,aligned_observations,ambiguous_observations,unmatched_observations,not_available_observations,label_eligible_observations,candidate_miss_count,candidate_miss_rate,total_candidate_rows,labeled_candidate_rows,positive_candidate_rows,negative_candidate_rows,median_align_dist_m,p95_align_dist_m,is_monotonic
+00000001,1315,1315,0,0,0,1313,2,0.001520912547528517,12343,12323,1313,11010,4.428,12.565,True
+00000002,7243,6373,2,868,0,6368,5,0.0007845598619174643,65333,59156,6368,52788,5.916,242.414,True
+00000003,821,821,0,0,0,815,6,0.007308160779537149,8089,8029,815,7214,4.472,14.012,True
+00000004,1064,1064,0,0,0,1056,8,0.007518796992481203,8593,8513,1056,7457,8.861,29.503,True
+00000005,1045,1045,0,0,0,1045,0,0.0,4278,4278,1045,3233,4.565,13.26,True

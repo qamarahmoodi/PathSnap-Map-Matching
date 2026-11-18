@@ -1,0 +1,7 @@
+trip_id,total_observations,aligned_observations,ambiguous_observations,unmatched_observations,label_eligible_observations,candidate_miss_count,candidate_miss_rate,total_candidate_rows,labeled_candidate_rows,null_label_candidate_rows,positive_label_count,negative_label_count,positive_class_ratio_among_labeled
+00000001,1315,1315,0,0,1313,2,0.001521,12343,12323,20,1313,11010,0.106549
+00000002,7243,6373,2,868,6368,5,0.000785,65333,59156,6177,6368,52788,0.107648
+00000003,821,821,0,0,815,6,0.007308,8089,8029,60,815,7214,0.101507
+00000004,1064,1064,0,0,1056,8,0.007519,8593,8513,80,1056,7457,0.124046
+00000005,1045,1045,0,0,1045,0,0.0,4278,4278,0,1045,3233,0.244273
+ALL_5_PREVIEW_TRIPS,11488,10618,2,868,10597,21,0.001978,98636,92299,6337,10597,81702,0.114812
