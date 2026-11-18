@@ -1,0 +1,9 @@
+trial_number,sampler,evaluation_scope,learning_rate,max_iter,max_leaf_nodes,max_depth,min_samples_leaf,l2_regularization,cv_macro_f1_mean,oof_macro_f1,oof_positive_f1,cv_log_loss_mean,oof_log_loss,oof_obs_top1_accuracy,oof_route_continuity,trial_time_s
+1,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.08,140,31,8,25,1.0,0.801056,0.744416,0.538072,0.221837,0.274761,0.596346,0.832883,5.5184
+2,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.045544,240,50,9,21,0.029375,0.798497,0.742336,0.534622,0.228286,0.291082,0.59013,0.834712,10.9214
+3,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.022722,220,44,10,11,8.123245,0.79578,0.742306,0.53375,0.213945,0.252476,0.595216,0.841244,10.3095
+4,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.157043,80,25,10,13,0.743122,0.798477,0.740871,0.532175,0.223733,0.279136,0.594462,0.838283,3.0318
+5,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.129547,180,16,7,55,0.158764,0.798795,0.740501,0.531025,0.217819,0.281436,0.59239,0.832796,4.9734
+6,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.054427,80,41,8,27,5.277649,0.79367,0.743182,0.535041,0.217751,0.247645,0.593709,0.843334,3.8925
+7,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.073068,120,31,12,41,4.052611,0.801026,0.745228,0.539661,0.219691,0.272779,0.590413,0.838544,4.6239
+8,Optuna TPESampler (Bayesian),Preliminary 5-Trip GroupKFold (5 folds),0.135547,120,59,11,41,0.852608,0.789385,0.733025,0.517383,0.241688,0.304574,0.580524,0.827136,5.8235

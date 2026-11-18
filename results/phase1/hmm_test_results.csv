@@ -1,0 +1,15 @@
+test_type,trip_or_case_id,model_source,num_observations,aligned_observations,greedy_top1_accuracy,viterbi_top1_accuracy,top1_accuracy_delta,greedy_route_continuity,viterbi_route_continuity,continuity_delta,changed_observations_count
+synthetic_deterministic,SYNTH_PARALLEL_SPIKE,Synthetic Emission Spike,3,3,0.666667,1.0,0.333333,0.0,1.0,1.0,1
+synthetic_deterministic,SYNTH_GAP_AND_EMPTY,Synthetic Empty-Cand + 117s Gap,4,4,1.0,1.0,0.0,0.666667,0.666667,0.0,0
+real_trip_oof_pilot,00000001,Tuned HistGradientBoosting (OOF),1315,1315,0.753612,0.93308,0.179468,0.754186,0.968037,0.213851,289
+real_trip_oof_pilot,00000002,Tuned HistGradientBoosting (OOF),7243,6373,0.474502,0.437471,-0.037031,0.838719,0.960922,0.122203,1836
+real_trip_oof_pilot,00000003,Tuned HistGradientBoosting (OOF),821,821,0.764921,0.817296,0.052375,0.829268,0.981707,0.152439,111
+real_trip_oof_pilot,00000004,Tuned HistGradientBoosting (OOF),1064,1064,0.56391,0.636278,0.072368,0.806209,0.856068,0.049859,116
+real_trip_oof_pilot,00000005,Tuned HistGradientBoosting (OOF),1045,1045,0.981818,0.993301,0.011483,0.983716,1.0,0.016284,12
+real_trip_oof_aggregate,ALL_5_PREVIEW_TRIPS,Tuned HistGradientBoosting (OOF),11488,10618,0.590413,0.602844,0.012432,0.838544,0.957067,0.118523,2364
+real_trip_oof_pilot,00000001,Logistic Regression (OOF),1315,1315,0.848669,0.941445,0.092776,0.8379,0.977169,0.139269,193
+real_trip_oof_pilot,00000002,Logistic Regression (OOF),7243,6373,0.52236,0.79727,0.27491,0.86675,0.966722,0.099972,3006
+real_trip_oof_pilot,00000003,Logistic Regression (OOF),821,821,0.774665,0.923264,0.148599,0.771951,0.991463,0.219512,156
+real_trip_oof_pilot,00000004,Logistic Regression (OOF),1064,1064,0.768797,0.87782,0.109023,0.883349,0.947319,0.06397,160
+real_trip_oof_pilot,00000005,Logistic Regression (OOF),1045,1045,0.959809,0.969378,0.009569,0.978927,1.0,0.021073,12
+real_trip_oof_aggregate,ALL_5_PREVIEW_TRIPS,Logistic Regression (OOF),11488,10618,0.650028,0.849878,0.199849,0.868414,0.970914,0.102499,3527
