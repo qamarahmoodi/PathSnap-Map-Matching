@@ -1,0 +1,16 @@
+{
+  "best_trial_number": 7,
+  "best_oof_macro_f1": 0.745228,
+  "best_params": {
+    "learning_rate": 0.07306785183605709,
+    "max_iter": 120,
+    "max_leaf_nodes": 31,
+    "max_depth": 12,
+    "min_samples_leaf": 41,
+    "l2_regularization": 4.0526111601987544,
+    "random_state": 42
+  },
+  "total_trials": 8,
+  "total_optimisation_time_s": 49.1236,
+  "refit_time_s": 1.004
+}
