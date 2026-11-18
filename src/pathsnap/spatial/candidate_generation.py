@@ -27,7 +27,7 @@ from pathsnap.spatial.road_network import (
 def generate_trip_candidates(
     trip_id: str,
     partition: str,
-    track: pd.DataFrame,
+    track: pd.DataFrame | np.ndarray,
     nodes: np.ndarray,
     arcs: np.ndarray,
     config: Optional[CandidateConfig] = None,
@@ -35,6 +35,8 @@ def generate_trip_candidates(
 ) -> CandidateGenerationResult:
     """Generate top-K candidate road segments and spatial/kinematic features for a trip.
 
+    Accepts `track` as either a pandas DataFrame (with columns longitude, latitude, timestamp_s)
+    or a raw 2D numpy ndarray of shape (N_obs, 3) as returned by `src/data_loader.py`.
     Strictly operates WITHOUT `.route` (safe for both training and blind evaluation inference).
     """
     if config is None:
@@ -46,15 +48,24 @@ def generate_trip_candidates(
     if road_network is None:
         road_network = build_trip_road_network(trip_id=trip_str, nodes=nodes, arcs=arcs)
 
-    lon = track["longitude"].to_numpy(dtype=np.float64)
-    lat = track["latitude"].to_numpy(dtype=np.float64)
-    timestamps_s = track["timestamp_s"].to_numpy(dtype=np.float64)
-    obs_ids = (
-        track["observation_id"].to_numpy(dtype=np.int32)
-        if "observation_id" in track.columns
-        else np.arange(len(track), dtype=np.int32)
-    )
-    n_obs = len(track)
+    if isinstance(track, np.ndarray):
+        if track.ndim != 2 or track.shape[1] != 3:
+            raise ValueError(f"Expected track ndarray of shape (N, 3), got {track.shape}")
+        lon = track[:, 0].astype(np.float64, copy=False)
+        lat = track[:, 1].astype(np.float64, copy=False)
+        timestamps_s = track[:, 2].astype(np.float64, copy=False)
+        n_obs = int(track.shape[0])
+        obs_ids = np.arange(n_obs, dtype=np.int32)
+    else:
+        lon = track["longitude"].to_numpy(dtype=np.float64)
+        lat = track["latitude"].to_numpy(dtype=np.float64)
+        timestamps_s = track["timestamp_s"].to_numpy(dtype=np.float64)
+        n_obs = len(track)
+        obs_ids = (
+            track["observation_id"].to_numpy(dtype=np.int32)
+            if "observation_id" in track.columns
+            else np.arange(n_obs, dtype=np.int32)
+        )
 
     pts_xy_m = road_network.projector.project_xy(np.column_stack([lon, lat]))
     kinematics = compute_gps_kinematics(pts_xy_m, timestamps_s, config)
