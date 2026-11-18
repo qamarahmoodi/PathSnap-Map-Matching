@@ -46,7 +46,7 @@ One row represents **one `(GPS observation, candidate road arc)` pair**.
 | `gps_bearing_deg` | `Float32` (nullable) | **Yes** | **ML Feature** | Causal GPS movement azimuth from observation $i-1 \to i$ in $[0, 360)^\circ$. Null (`<NA>`) at `observation_id == 0`, when $\Delta t \le 0$, $\Delta t > 30\text{ s}$, or step displacement $< 2.5\text{ m}$. |
 | `bearing_difference_deg` | `Float32` (nullable) | **Yes** | **ML Feature** | Smallest unsigned angle $|\text{gps\_bearing} - \text{segment\_bearing}| \in [0, 180]^\circ$. Null whenever `gps_bearing_deg` is null. |
 | `gps_speed_mps` | `Float32` (nullable) | **Yes** | **ML Feature** | Causal point-to-point speed $\Delta d / \Delta t$ in $\text{m/s}$. Null at `observation_id == 0`, when $\Delta t \le 0$, $\Delta t > 30\text{ s}$, or when $\Delta d / \Delta t > 65\text{ m/s}$. |
-| `delta_time_s` | `Float32` (nullable) | **Yes** | **ML Feature** | Backward time step $t_i - t_{i-1}$ in seconds. Null at `observation_id == 0`. |
+| `delta_time_s` | `Float32` (nullable) | **Yes** | **ML Feature** | Backward time step $t_i - t_{i-1}$ in seconds. Null at `observation_id == 0` or when $\Delta t \le 0$ (retains positive elapsed gap values across dropouts $> 30\text{ s}$). |
 | `is_fallback_candidate` | `bool` | No | **ML Feature** | `True` if no road existed within `search_radius_m` and this candidate was retrieved via fallback nearest-neighbour search. |
 | `label` | `Int8` (nullable) | **Yes** | **Target ($y$)** | `1` if candidate matches confidently aligned reference arc; `0` for non-matching candidates of a `label_eligible` observation; `<NA>` during inference or when `label_eligible == False`. |
 

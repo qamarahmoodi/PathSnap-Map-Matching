@@ -79,10 +79,12 @@ Implemented in [`src/sequence/viterbi_decoder.py`](../../src/sequence/viterbi_de
 | Trip / Aggregate | Model Emissions Used | Greedy Top-1 Acc | **HMM/Viterbi Top-1 Acc** | **Top-1 Gain ($\Delta$)** | Greedy Continuity | **HMM/Viterbi Continuity** | **Continuity Gain ($\Delta$)** |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Trip `00000001`** (`1,315` obs) | Tuned HistGradientBoosting (OOF) | `75.36%` | **`93.31%`** | **`+17.95%`** | `75.42%` | **`96.80%`** | **`+21.39%`** |
+| **Trip `00000002`** (`7,243` obs, `6,373` aligned) | Tuned HistGradientBoosting (OOF) | **`47.45%`** | `43.75%` | `-3.70%` | `83.87%` | **`96.09%`** | **`+12.22%`** |
 | **Trip `00000003`** (`821` obs) | Tuned HistGradientBoosting (OOF) | `76.49%` | **`81.73%`** | **`+5.24%`** | `82.93%` | **`98.17%`** | **`+15.24%`** |
 | **Trip `00000004`** (`1,064` obs) | Tuned HistGradientBoosting (OOF) | `56.39%` | **`63.63%`** | **`+7.24%`** | `80.62%` | **`85.61%`** | **`+4.99%`** |
 | **Trip `00000005`** (`1,045` obs) | Tuned HistGradientBoosting (OOF) | `98.18%` | **`99.33%`** | **`+1.15%`** | `98.37%` | **`100.00%`** | **`+1.63%`** |
 | **All 5 Preview Trips (`11,488` obs)** | Tuned HistGradientBoosting (OOF) | `59.04%` | **`60.28%`** | **`+1.24%`** | `83.85%` | **`95.71%`** | **`+11.85%`** |
 | **All 5 Preview Trips (`11,488` obs)** | **Logistic Regression (OOF)** | `65.00%` | **`84.99%`** | **`+19.98%`** | `86.84%` | **`97.09%`** | **`+10.25%`** |
 
+- **Note on Trip `00000002` Trade-Off:** Because Trip `00000002` holds `64.1%` of the 5-trip pilot rows (`59,156 / 92,299`), Fold 4 trains HGB on only `33,143` rows from the 4 smaller trips (`0.3177` fold Log Loss), causing uncalibrated log-odds at intersections where Viterbi prioritizes connected paths (`96.09%` continuity vs `83.87%` greedy) at a `-3.70%` pointwise trade-off. With better-calibrated Logistic Regression probabilities (`0.2378` OOF Log Loss), Viterbi improves Trip `00000002` accuracy from `52.24%` to `79.73%` (`+27.49%`).
 - **Interactive Map Generated:** [`results/phase1/trip_00000001_viterbi_vs_greedy_map.html`](trip_00000001_viterbi_vs_greedy_map.html) visualizes Trip `00000001` where HMM/Viterbi boosts observation accuracy from **`75.36%` to `93.31%`** (`+17.95%`) and route continuity from **`75.42%` to `96.80%`** (`+21.39%`).

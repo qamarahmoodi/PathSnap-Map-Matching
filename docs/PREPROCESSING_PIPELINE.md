@@ -121,4 +121,4 @@ flowchart TD
 | **$100\text{ m}$** | **$10$** | **$22,193$** | **$60$** | **$0.270\%$** | **$99.730\%$** | **$8.48$** | **$11.26\%$** |
 | $100\text{ m}$ | $15$ | $22,193$ | $9$ | $0.041\%$ | $99.959\%$ | $11.68$ | $8.20\%$ |
 
-We select **$R = 100\text{ m}, K = 10$** as our default configuration (`configs/default.yaml`): it achieves **$99.73\%$ candidate recall ($0.27\%$ miss rate)** while keeping the positive-to-negative class ratio balanced at **$11.26\%$ ($\sim 1:7.9$)** and query time at $< 0.2\text{ s}$ per trip.
+We select **$R = 100\text{ m}, K = 10$** as our default configuration (`configs/default.yaml`): because `alignment_max_confident_distance_m = 50.0 m`, both $R=50\text{ m}$ and $R=100\text{ m}$ achieve the exact same **`99.73%` candidate recall (`60` rank-cap misses)** on confidently aligned observations, while $R=100\text{ m}$ retains connected road candidates during $50\text{--}100\text{ m}$ GPS drift so the downstream Viterbi decoder does not collapse to a single fallback candidate.

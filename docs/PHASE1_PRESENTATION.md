@@ -14,7 +14,7 @@
   - **Geographic Span:** Multi-continent dataset ($\text{lon} \in [-100.42^\circ, 137.24^\circ]$, $\text{lat} \in [-34.64^\circ, 61.70^\circ]$).
   - **Key Telemetry Challenges Identified:**
     - Nominal $1\text{ s}$ sampling ($94.3\%$ mean exact $1\text{ s}$ steps), but **$47/90$ trips contain gaps $> 5\text{ s}$** and **$30/90$ trips contain gaps $> 30\text{ s}$**.
-    - `.track` length ($N_{\text{obs}}$) never equals `.route` length ($M_{\text{route}}$), and $36/90$ routes contain repeated arcs (loops).
+    - `.track` length ($N_{\text{obs}}$) never equals `.route` length ($M_{\text{route}}$), and $10/90$ routes ($322$ repeated segment occurrences) traverse the same `arc_id` multiple times (loops/U-turns).
 
 ---
 
