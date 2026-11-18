@@ -21,6 +21,8 @@ from pathsnap.schemas.candidate_schema import CANDIDATE_FEATURE_COLUMNS
 
 
 ENV_MODEL_PATH = "PATHSNAP_MODEL_PATH"
+DEFAULT_FINAL_TUNED_MODEL_REL = Path("artifacts") / "final_tuned_model.joblib"
+DEFAULT_FINAL_MODEL_REL = Path("artifacts") / "final_model.joblib"
 DEFAULT_PRIMARY_MODEL_REL = Path("artifacts") / "best_model.joblib"
 DEFAULT_FALLBACK_MODEL_REL = Path("artifacts") / "phase1_pilot_tuned_hgb.joblib"
 
@@ -60,6 +62,10 @@ def resolve_model_path(model_path: Optional[str | Path] = None) -> Path:
     cwd = Path.cwd()
     candidates.extend(
         [
+            cwd / DEFAULT_FINAL_TUNED_MODEL_REL,
+            repo_root / DEFAULT_FINAL_TUNED_MODEL_REL,
+            cwd / DEFAULT_FINAL_MODEL_REL,
+            repo_root / DEFAULT_FINAL_MODEL_REL,
             cwd / DEFAULT_PRIMARY_MODEL_REL,
             repo_root / DEFAULT_PRIMARY_MODEL_REL,
             cwd / DEFAULT_FALLBACK_MODEL_REL,
@@ -109,12 +115,17 @@ class CandidateModelScorer:
         resolved = resolve_model_path(model_path)
         loaded = joblib.load(resolved)
 
-        # Support either direct sklearn estimator/Pipeline or a dict bundle {"model": ..., "feature_columns": ...}
+        # Support either direct sklearn estimator/Pipeline or a dict bundle {"model"/"estimator": ...}
         if isinstance(loaded, dict):
-            if "model" not in loaded:
-                raise ValueError(f"Model bundle dictionary at {resolved} is missing 'model' key")
-            estimator = loaded["model"]
-            feat_cols = loaded.get("feature_columns", CANDIDATE_FEATURE_COLUMNS)
+            if "estimator" in loaded:
+                estimator = loaded["estimator"]
+                meta = loaded.get("metadata", {})
+                feat_cols = meta.get("feature_columns", loaded.get("feature_columns", CANDIDATE_FEATURE_COLUMNS))
+            elif "model" in loaded:
+                estimator = loaded["model"]
+                feat_cols = loaded.get("feature_columns", CANDIDATE_FEATURE_COLUMNS)
+            else:
+                raise ValueError(f"Model bundle dictionary at {resolved} is missing 'estimator' or 'model' key")
         else:
             estimator = loaded
             feat_cols = CANDIDATE_FEATURE_COLUMNS

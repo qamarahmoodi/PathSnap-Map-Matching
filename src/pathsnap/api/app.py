@@ -31,7 +31,7 @@ from pathsnap.api.schemas import (
     TripOption,
     TripsListResponse,
 )
-from pathsnap.data.loader import list_trips, resolve_data_root
+from pathsnap.data.loader import list_trips, resolve_data_root, resolve_partition_dir
 from pathsnap.inference.inference_pipeline import run_trip_inference
 from pathsnap.inference.model_scorer import CandidateModelScorer
 from pathsnap.inference.server_evaluator import evaluate_trip_predictions_server_side
@@ -104,14 +104,20 @@ class BackendRuntimeState:
                 self.custom_eval_partition
                 or os.environ.get(ENV_EVAL_PARTITION)
             )
-            if part_pref and (self.data_root / part_pref).is_dir():
-                chosen_part = part_pref
-            elif (self.data_root / "evaluator_test").is_dir():
-                chosen_part = "evaluator_test"
-            elif (self.data_root / "eval").is_dir():
-                chosen_part = "eval"
+            chosen_part = "student_test"
+            if part_pref:
+                try:
+                    resolve_partition_dir(part_pref, self.data_root)
+                    chosen_part = part_pref
+                except FileNotFoundError:
+                    chosen_part = "student_test"
             else:
-                chosen_part = "student_test"
+                # Automatically prefer evaluator_test if available in data_root or sibling ../evaluator_test
+                try:
+                    resolve_partition_dir("evaluator_test", self.data_root)
+                    chosen_part = "evaluator_test"
+                except FileNotFoundError:
+                    chosen_part = "student_test"
 
             self.active_partition = chosen_part
             trip_ids = list_trips(chosen_part, self.data_root)
@@ -321,20 +327,30 @@ def create_app(
         )
         logger.info("============================================================")
 
+        per_obs_viterbi_arcs = [
+            int(a) for a in inf_out.observation_predictions["viterbi_arc_id"].to_numpy(dtype=int)
+        ]
+
         return PredictResponse(
             status="ok",
             trip_id=inf_out.trip_id,
             partition=inf_out.partition,
             model_name=inf_out.model_name,
+            decoder="HMM + Viterbi",
+            num_observations=int(inf_out.candidate_summary["num_observations"]),
+            predicted_arc_ids=per_obs_viterbi_arcs,
+            reconstructed_route_arcs=inf_out.predicted_route_arc_ids,
             predicted_route_arc_ids=inf_out.predicted_route_arc_ids,
             classifier_only_route_arc_ids=inf_out.classifier_only_route_arc_ids,
             predicted_route_segments_latlon=inf_out.predicted_route_segments_latlon,
             classifier_only_route_segments_latlon=inf_out.classifier_only_route_segments_latlon,
             gps_trajectory_latlon=inf_out.gps_trajectory_latlon,
+            gps_points_latlon=inf_out.gps_trajectory_latlon,
             candidate_summary=inf_out.candidate_summary,
             decoder_summary=inf_out.decoder_summary,
             evaluation_metrics=eval_res.metrics,
             reference_evaluated_on_server=eval_res.reference_available,
+            inference_time_ms=total_wall_ms,
             processing_time_ms=timing_out,
             observation_predictions=obs_records,
         )

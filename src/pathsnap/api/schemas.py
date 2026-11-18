@@ -61,14 +61,20 @@ class PredictResponse(BaseModel):
     trip_id: str
     partition: str
     model_name: str
+    decoder: str = "HMM + Viterbi"
+    num_observations: int = 0
+    predicted_arc_ids: List[int] = Field(default_factory=list)
+    reconstructed_route_arcs: List[int] = Field(default_factory=list)
     predicted_route_arc_ids: List[int]
     classifier_only_route_arc_ids: List[int]
     predicted_route_segments_latlon: List[List[List[float]]]
     classifier_only_route_segments_latlon: List[List[List[float]]]
     gps_trajectory_latlon: List[List[float]]
+    gps_points_latlon: List[List[float]] = Field(default_factory=list)
     candidate_summary: Dict[str, Any]
     decoder_summary: Dict[str, Any]
     evaluation_metrics: Dict[str, Any]
     reference_evaluated_on_server: bool
+    inference_time_ms: float = 0.0
     processing_time_ms: Dict[str, float]
     observation_predictions: List[ObservationPredictionRecord] = Field(default_factory=list)

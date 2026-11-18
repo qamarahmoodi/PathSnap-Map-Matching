@@ -21,7 +21,7 @@ from sklearn.metrics import accuracy_score, f1_score, log_loss, precision_score,
 
 from pathsnap.alignment.label_generation import attach_alignment_labels, summarize_trip_labels
 from pathsnap.alignment.route_alignment import align_reference_route
-from pathsnap.data.loader import load_route_file, load_trip, resolve_data_root
+from pathsnap.data.loader import load_route_file, load_trip, resolve_partition_dir
 from pathsnap.inference.inference_pipeline import TripInferenceOutput
 from pathsnap.schemas.candidate_schema import CandidateConfig, CandidateGenerationResult
 
@@ -68,14 +68,15 @@ def evaluate_trip_predictions_server_side(
 ) -> ServerEvaluationResult:
     """Compute server-side evaluation metrics after prediction is complete, without leaking `.route`."""
     t0 = time.perf_counter()
-    root = resolve_data_root(data_root)
-    trip_dir = root / inference_output.partition / inference_output.trip_id
+    part_dir = resolve_partition_dir(inference_output.partition, data_root)
+    trip_dir = part_dir / inference_output.trip_id
     route_path = trip_dir / f"{inference_output.trip_id}.route"
 
     # Always include topological continuity metrics (which do not require .route)
     base_metrics: Dict[str, Any] = {
         "classifier_only_route_continuity": inference_output.decoder_summary.get("greedy_route_continuity"),
         "hmm_viterbi_route_continuity": inference_output.decoder_summary.get("viterbi_route_continuity"),
+        "route_continuity": inference_output.decoder_summary.get("viterbi_route_continuity"),
         "hmm_viterbi_multihop_reachability": inference_output.decoder_summary.get("viterbi_multihop_reachability"),
         "changed_observations_by_hmm": int(inference_output.decoder_summary.get("changed_observations_count", 0)),
     }
@@ -94,7 +95,7 @@ def evaluate_trip_predictions_server_side(
     raw = load_trip(
         trip_id=inference_output.trip_id,
         partition=inference_output.partition,
-        data_root=root,
+        data_root=data_root,
         include_route=False,
     )
 
@@ -179,6 +180,9 @@ def evaluate_trip_predictions_server_side(
         "hmm_viterbi_top1_accuracy": round(viterbi_top1_aligned, 6)
         if np.isfinite(viterbi_top1_aligned)
         else None,
+        "observation_top1_accuracy": round(viterbi_top1_aligned, 6)
+        if np.isfinite(viterbi_top1_aligned)
+        else None,
         "top1_accuracy_improvement_delta": round(viterbi_top1_aligned - greedy_top1_aligned, 6)
         if (np.isfinite(viterbi_top1_aligned) and np.isfinite(greedy_top1_aligned))
         else None,
@@ -193,6 +197,7 @@ def evaluate_trip_predictions_server_side(
             6,
         ),
         "candidate_macro_f1": cand_macro_f1,
+        "macro_f1": cand_macro_f1,
         "candidate_positive_f1": cand_pos_f1,
         "candidate_accuracy": cand_acc,
         "candidate_precision": cand_prec,

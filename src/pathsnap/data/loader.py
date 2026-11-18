@@ -65,15 +65,51 @@ def resolve_data_root(data_root: Optional[str | Path] = None) -> Path:
     )
 
 
+def resolve_partition_dir(
+    partition: str = "train",
+    data_root: Optional[str | Path] = None,
+) -> Path:
+    """Resolve the directory for a given partition ('train', 'student_test', 'evaluator_test').
+
+    Checks:
+      1. `<data_root>/<partition>` if `data_root` is provided or resolved.
+      2. If `data_root` itself is already the partition folder (e.g. `.../evaluator_test` containing `00000015/`).
+      3. Sibling directory `../<partition>` (e.g. `C:/Users/Qamar/Downloads/evaluator_test`).
+    """
+    if data_root is not None:
+        explicit = Path(data_root).resolve()
+        if (explicit / partition).is_dir():
+            return (explicit / partition).resolve()
+        if explicit.name == partition and explicit.is_dir():
+            return explicit
+
+    try:
+        root = resolve_data_root(data_root)
+        if (root / partition).is_dir():
+            return (root / partition).resolve()
+        if (root.parent / partition).is_dir():
+            return (root.parent / partition).resolve()
+    except FileNotFoundError:
+        pass
+
+    cwd = Path.cwd()
+    for cand in [
+        cwd / ".." / partition,
+        cwd / partition,
+        Path(__file__).resolve().parents[4] / partition,
+    ]:
+        if cand.is_dir():
+            return cand.resolve()
+
+    raise FileNotFoundError(f"Partition directory not found for partition='{partition}'")
+
+
 def list_trips(
     partition: str = "train",
     data_root: Optional[str | Path] = None,
 ) -> List[str]:
     """Return sorted list of trip_id strings (preserving leading zeros) in a partition."""
-    root = resolve_data_root(data_root)
-    part_dir = root / partition
-    if not part_dir.is_dir():
-        raise FileNotFoundError(f"Partition directory not found: {part_dir}")
+    part_dir = resolve_partition_dir(partition, data_root)
     trip_ids = sorted(
         [d.name for d in part_dir.iterdir() if d.is_dir()],
         key=lambda x: str(x),
@@ -232,8 +268,8 @@ def load_trip(
     Set `include_route=False` during inference to enforce strict training/inference separation.
     """
     trip_str = str(trip_id)
-    root = resolve_data_root(data_root)
-    trip_dir = root / partition / trip_str
+    part_dir = resolve_partition_dir(partition, data_root)
+    trip_dir = part_dir / trip_str
     if not trip_dir.is_dir():
         raise FileNotFoundError(f"Trip directory not found: {trip_dir}")
 
