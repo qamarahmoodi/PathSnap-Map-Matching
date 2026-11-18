@@ -40,6 +40,8 @@ class HealthResponse:
     is_mock: bool
     api_base_url: str
     latency_ms: float
+    active_partition: Optional[str] = None
+    permitted_trip_count: int = 0
     error_message: Optional[str] = None
 
 
@@ -48,6 +50,7 @@ class TripsResponse:
     ok: bool
     trips: List[Dict[str, Any]]
     is_mock: bool
+    partition: Optional[str] = None
     error_message: Optional[str] = None
 
 
@@ -63,12 +66,16 @@ class PredictResponse:
     num_observations: int
     predicted_arc_ids: List[int]
     reconstructed_route_arcs: List[int]
+    classifier_only_route_arcs: List[int] = field(default_factory=list)
     # Predicted route polyline segments: list of [[lat1, lon1], [lat2, lon2]]
     predicted_route_segments_latlon: List[List[List[float]]] = field(default_factory=list)
+    classifier_only_route_segments_latlon: List[List[List[float]]] = field(default_factory=list)
     # Optional raw GPS points [[lat, lon], ...] for map overlay (never ground-truth route!)
     gps_points_latlon: List[List[float]] = field(default_factory=list)
     # Permitted server-calculated evaluation metrics (if returned by Laptop 1 API)
     evaluation_metrics: Dict[str, Any] = field(default_factory=dict)
+    decoder_summary: Dict[str, Any] = field(default_factory=dict)
+    candidate_summary: Dict[str, Any] = field(default_factory=dict)
     inference_time_ms: float = 0.0
     error_message: Optional[str] = None
 
@@ -177,14 +184,20 @@ class PathSnapAPIClient:
         try:
             data = self._http_json("GET", "/health")
             elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+            status = str(data.get("status", "ok"))
+            ready = bool(data.get("ready", True))
+            model_loaded = bool(data.get("model_loaded", True))
             return HealthResponse(
-                ok=True,
-                status=str(data.get("status", "ok")),
-                model_loaded=bool(data.get("model_loaded", True)),
-                model_name=str(data.get("model_name", "PathSnap Server Model")),
+                ok=(status == "ok" and ready),
+                status=status,
+                model_loaded=model_loaded,
+                model_name=str(data.get("model_name") or "PathSnap Server Model"),
                 is_mock=False,
                 api_base_url=self.base_url,
                 latency_ms=elapsed_ms,
+                active_partition=data.get("active_partition"),
+                permitted_trip_count=int(data.get("permitted_trip_count", 0)),
+                error_message=data.get("error"),
             )
         except Exception as exc:
             elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
@@ -202,11 +215,12 @@ class PathSnapAPIClient:
     def get_trips(self) -> TripsResponse:
         """Call `GET /trips` on Laptop 1 API to retrieve the 10 evaluation trip options."""
         if self.mock_mode:
-            return TripsResponse(ok=True, trips=list(MOCK_EVALUATOR_TRIPS), is_mock=True)
+            return TripsResponse(ok=True, trips=list(MOCK_EVALUATOR_TRIPS), is_mock=True, partition="mock")
 
         try:
             data = self._http_json("GET", "/trips")
             raw_trips = data.get("trips", data) if isinstance(data, dict) else data
+            part_name = data.get("partition") if isinstance(data, dict) else None
             normalized: List[Dict[str, Any]] = []
             if isinstance(raw_trips, list):
                 for item in raw_trips:
@@ -215,11 +229,13 @@ class PathSnapAPIClient:
                     elif isinstance(item, dict) and "trip_id" in item:
                         tid = str(item["trip_id"])
                         obs_n = item.get("num_observations")
-                        lbl = item.get("label") or (
-                            f"Trip {tid} ({obs_n:,} GPS pts)" if obs_n else f"Trip {tid}"
+                        lbl = (
+                            item.get("display_label")
+                            or item.get("label")
+                            or (f"Trip {tid} ({obs_n:,} GPS pts)" if obs_n else f"Trip {tid}")
                         )
                         normalized.append({**item, "trip_id": tid, "label": lbl})
-            return TripsResponse(ok=True, trips=normalized, is_mock=False)
+            return TripsResponse(ok=True, trips=normalized, is_mock=False, partition=part_name)
         except Exception as exc:
             return TripsResponse(
                 ok=False,
@@ -249,7 +265,11 @@ class PathSnapAPIClient:
 
         t0 = time.perf_counter()
         try:
-            data = self._http_json("POST", "/predict", payload={"trip_id": tid})
+            data = self._http_json(
+                "POST",
+                "/predict",
+                payload={"trip_id": tid, "include_observation_records": True},
+            )
             elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
 
             # Strictly strip any accidental reference/ground-truth route fields if present
@@ -257,10 +277,48 @@ class PathSnapAPIClient:
             for forbidden_key in ("reference_route", "reference_arc_ids", "ground_truth", "labels", "route"):
                 safe_metrics.pop(forbidden_key, None)
 
-            pred_arcs = [int(x) for x in data.get("predicted_arc_ids", data.get("viterbi_arc_ids", []))]
-            route_arcs = [int(x) for x in data.get("reconstructed_route_arcs", data.get("predicted_route", pred_arcs))]
+            # Normalize Qamar's real evaluation_metrics keys into UI display keys
+            if "hmm_viterbi_top1_accuracy" in safe_metrics and "observation_top1_accuracy" not in safe_metrics:
+                safe_metrics["observation_top1_accuracy"] = safe_metrics["hmm_viterbi_top1_accuracy"]
+            if "candidate_macro_f1" in safe_metrics and "macro_f1" not in safe_metrics:
+                safe_metrics["macro_f1"] = safe_metrics["candidate_macro_f1"]
+            if "hmm_viterbi_route_continuity" in safe_metrics and "route_continuity" not in safe_metrics:
+                safe_metrics["route_continuity"] = safe_metrics["hmm_viterbi_route_continuity"]
+
+            obs_recs = data.get("observation_predictions") or []
+            if obs_recs and "predicted_arc_id" in obs_recs[0]:
+                pred_arcs = [int(r["predicted_arc_id"]) for r in obs_recs]
+            else:
+                pred_arcs = [int(x) for x in data.get("predicted_arc_ids", data.get("viterbi_arc_ids", []))]
+
+            route_arcs = [
+                int(x)
+                for x in (
+                    data.get("predicted_route_arc_ids")
+                    or data.get("reconstructed_route_arcs")
+                    or data.get("predicted_route")
+                    or pred_arcs
+                )
+            ]
+            cls_only_arcs = [int(x) for x in (data.get("classifier_only_route_arc_ids") or [])]
+
             segments = data.get("predicted_route_segments_latlon") or data.get("route_geometry_latlon") or []
-            gps_pts = data.get("gps_points_latlon") or data.get("track_latlon") or []
+            cls_only_segments = data.get("classifier_only_route_segments_latlon") or []
+            gps_pts = (
+                data.get("gps_trajectory_latlon")
+                or data.get("gps_points_latlon")
+                or data.get("track_latlon")
+                or []
+            )
+
+            cand_sum = dict(data.get("candidate_summary") or {})
+            dec_sum = dict(data.get("decoder_summary") or {})
+            proc_ms = data.get("processing_time_ms") or {}
+            num_obs = int(cand_sum.get("num_observations") or data.get("num_observations") or len(pred_arcs) or len(gps_pts))
+            req_ms = float(
+                proc_ms.get("total_request_ms") if isinstance(proc_ms, dict) and "total_request_ms" in proc_ms
+                else data.get("inference_time_ms", elapsed_ms)
+            )
 
             return PredictResponse(
                 ok=True,
@@ -268,13 +326,17 @@ class PathSnapAPIClient:
                 is_mock=False,
                 model_name=str(data.get("model_name", "Bayesian-Tuned HistGradientBoosting")),
                 decoder=str(data.get("decoder", "HMM + Viterbi")),
-                num_observations=int(data.get("num_observations", len(pred_arcs) or len(gps_pts))),
+                num_observations=num_obs,
                 predicted_arc_ids=pred_arcs,
                 reconstructed_route_arcs=route_arcs,
+                classifier_only_route_arcs=cls_only_arcs,
                 predicted_route_segments_latlon=segments,
+                classifier_only_route_segments_latlon=cls_only_segments,
                 gps_points_latlon=gps_pts,
                 evaluation_metrics=safe_metrics,
-                inference_time_ms=float(data.get("inference_time_ms", elapsed_ms)),
+                decoder_summary=dec_sum,
+                candidate_summary=cand_sum,
+                inference_time_ms=req_ms,
             )
         except urllib.error.HTTPError as hexc:
             err_body = ""

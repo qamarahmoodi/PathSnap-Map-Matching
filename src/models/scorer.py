@@ -64,8 +64,8 @@ def load_trained_model(
         raise FileNotFoundError(f"Trained model artifact not found at: {art_p}")
 
     payload = joblib.load(art_p)
-    if isinstance(payload, dict) and "estimator" in payload:
-        estimator = payload["estimator"]
+    if isinstance(payload, dict) and ("estimator" in payload or "model" in payload):
+        estimator = payload.get("estimator") or payload.get("model")
         meta = payload.get("metadata", {})
     else:
         estimator = payload
