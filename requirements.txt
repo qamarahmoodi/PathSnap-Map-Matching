@@ -8,4 +8,5 @@ folium>=0.15
 pyyaml>=6.0
 matplotlib>=3.8
 seaborn>=0.13
+optuna>=3.5
 pytest>=8.0

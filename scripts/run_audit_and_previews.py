@@ -172,7 +172,30 @@ def create_folium_alignment_map(
     center_lat = float(np.mean(lat))
     center_lon = float(np.mean(lon))
 
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=14, tiles="OpenStreetMap")
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=14,
+        tiles=None,
+        control_scale=True,
+    )
+    folium.TileLayer(
+        tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        attr="&copy; OpenStreetMap contributors &copy; CARTO",
+        name="CartoDB Positron (Street Map)",
+        subdomains="abcd",
+        max_zoom=20,
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri",
+        name="Esri World Street Map",
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attr="&copy; OpenStreetMap contributors",
+        name="OpenStreetMap",
+        referrer_policy="origin",
+    ).add_to(m)
 
     # 1. Layer: Candidate Road Network Subset (all arcs that appeared as top-3 candidates or in route)
     top_cands = labeled_res.candidates[labeled_res.candidates["candidate_rank"] <= 3]

@@ -27,7 +27,25 @@ def create_plots(inventory_csv, out):
 def create_trip_map(trip_dir, output_html):
     d = load_trip(trip_dir); track,nodes,arcs,route = d['track'],d['nodes'],d['arcs'],d['route']
     lon,lat = track[:,0],track[:,1]
-    m = folium.Map([float(lat.mean()),float(lon.mean())], zoom_start=13, control_scale=True)
+    m = folium.Map([float(lat.mean()),float(lon.mean())], zoom_start=13, tiles=None, control_scale=True)
+    folium.TileLayer(
+        tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        attr='&copy; OpenStreetMap contributors &copy; CARTO',
+        name='CartoDB Positron (Street Map)',
+        subdomains='abcd',
+        max_zoom=20,
+    ).add_to(m)
+    folium.TileLayer(
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        attr='Tiles &copy; Esri',
+        name='Esri World Street Map',
+    ).add_to(m)
+    folium.TileLayer(
+        tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attr='&copy; OpenStreetMap contributors',
+        name='OpenStreetMap',
+        referrer_policy='origin',
+    ).add_to(m)
     # Limit road graph rendering to a padded GPS bounding box for map responsiveness.
     pad_lon=max(float(np.ptp(lon))*.15,.001); pad_lat=max(float(np.ptp(lat))*.15,.001)
     mask=((nodes[arcs[:,0],0]+nodes[arcs[:,1],0])/2 >= lon.min()-pad_lon) & ((nodes[arcs[:,0],0]+nodes[arcs[:,1],0])/2 <= lon.max()+pad_lon) & ((nodes[arcs[:,0],1]+nodes[arcs[:,1],1])/2 >= lat.min()-pad_lat) & ((nodes[arcs[:,0],1]+nodes[arcs[:,1],1])/2 <= lat.max()+pad_lat)

@@ -19,6 +19,7 @@ dependencies = [
     "pyyaml>=6.0",
     "matplotlib>=3.8",
     "seaborn>=0.13",
+    "optuna>=3.5",
 ]
 
 [tool.setuptools.packages.find]

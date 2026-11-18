@@ -194,7 +194,30 @@ def create_viterbi_folium_map(
     """Create an interactive Folium map comparing Raw GPS, Reference Route, Greedy Top-1, and HMM/Viterbi Route."""
     lon = raw.track["longitude"].to_numpy()
     lat = raw.track["latitude"].to_numpy()
-    m = folium.Map(location=[float(np.mean(lat)), float(np.mean(lon))], zoom_start=14, tiles="OpenStreetMap")
+    m = folium.Map(
+        location=[float(np.mean(lat)), float(np.mean(lon))],
+        zoom_start=14,
+        tiles=None,
+        control_scale=True,
+    )
+    folium.TileLayer(
+        tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        attr="&copy; OpenStreetMap contributors &copy; CARTO",
+        name="CartoDB Positron (Street Map)",
+        subdomains="abcd",
+        max_zoom=20,
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri",
+        name="Esri World Street Map",
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attr="&copy; OpenStreetMap contributors",
+        name="OpenStreetMap",
+        referrer_policy="origin",
+    ).add_to(m)
 
     # 1. Reference Route (.route)
     if raw.route is not None:
