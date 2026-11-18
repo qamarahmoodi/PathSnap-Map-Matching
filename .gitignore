@@ -33,7 +33,6 @@ wheels/
 venv/
 ENV/
 env/
-data/
 
 # Pytest & coverage
 .pytest_cache/

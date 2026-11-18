@@ -13,7 +13,7 @@ from pathsnap.spatial.road_network import compute_point_to_segments_geometry
 
 
 def align_reference_route(
-    track: pd.DataFrame,
+    track: pd.DataFrame | np.ndarray,
     nodes: np.ndarray,
     arcs: np.ndarray,
     route: Optional[np.ndarray],
@@ -22,6 +22,9 @@ def align_reference_route(
     projector: Optional[LocalTangentProjector] = None,
 ) -> ReferenceAlignment:
     """Align an ordered reference `.route` arc sequence to a GPS `.track` via monotonic DP.
+
+    Accepts `track` as either a pandas DataFrame or a raw 2D numpy ndarray of shape (N_obs, 3)
+    as returned by `src/data_loader.py`.
 
     Design properties:
     1. Reconstructs the metric geometry of every route occurrence j in 0..M-1 (preserving repeated arcs).
@@ -41,12 +44,24 @@ def align_reference_route(
     if config is None:
         config = CandidateConfig()
 
-    n_obs = len(track)
-    obs_ids = (
-        track["observation_id"].to_numpy(dtype=np.int32)
-        if "observation_id" in track.columns
-        else np.arange(n_obs, dtype=np.int32)
-    )
+    if isinstance(track, np.ndarray):
+        if track.ndim != 2 or track.shape[1] != 3:
+            raise ValueError(f"Expected track ndarray of shape (N, 3), got {track.shape}")
+        n_obs = int(track.shape[0])
+        obs_ids = np.arange(n_obs, dtype=np.int32)
+        lon_raw = track[:, 0].astype(np.float64, copy=False)
+        lat_raw = track[:, 1].astype(np.float64, copy=False)
+        ts_raw = track[:, 2].astype(np.float64, copy=False)
+    else:
+        n_obs = len(track)
+        obs_ids = (
+            track["observation_id"].to_numpy(dtype=np.int32)
+            if "observation_id" in track.columns
+            else np.arange(n_obs, dtype=np.int32)
+        )
+        lon_raw = track["longitude"].to_numpy(dtype=np.float64) if n_obs > 0 else np.empty(0, dtype=np.float64)
+        lat_raw = track["latitude"].to_numpy(dtype=np.float64) if n_obs > 0 else np.empty(0, dtype=np.float64)
+        ts_raw = track["timestamp_s"].to_numpy(dtype=np.float64) if n_obs > 0 else np.empty(0, dtype=np.float64)
 
     if route is None or len(route) == 0 or n_obs == 0:
         return ReferenceAlignment(
@@ -69,9 +84,9 @@ def align_reference_route(
     if projector is None:
         projector = LocalTangentProjector.from_lon_lat(nodes_arr[:, 0], nodes_arr[:, 1])
 
-    lon = track["longitude"].to_numpy(dtype=np.float64)
-    lat = track["latitude"].to_numpy(dtype=np.float64)
-    timestamps_s = track["timestamp_s"].to_numpy(dtype=np.float64)
+    lon = lon_raw
+    lat = lat_raw
+    timestamps_s = ts_raw
 
     pts_xy_m = projector.project_xy(np.column_stack([lon, lat]))
     kinematics = compute_gps_kinematics(pts_xy_m, timestamps_s, config)
