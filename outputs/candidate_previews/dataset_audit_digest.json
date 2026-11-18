@@ -1,0 +1,31 @@
+{
+  "total_trips": 90,
+  "train_trips": 80,
+  "student_test_trips": 10,
+  "total_gps_observations": 227577,
+  "train_gps_observations": 208417,
+  "student_test_gps_observations": 19160,
+  "min_obs_per_trip": 262,
+  "median_obs_per_trip": 1496.5,
+  "max_obs_per_trip": 19313,
+  "min_arcs_per_trip": 649,
+  "median_arcs_per_trip": 18761.5,
+  "max_arcs_per_trip": 307392,
+  "overall_lon_range": [
+    -100.418538,
+    137.237029
+  ],
+  "overall_lat_range": [
+    -34.640291,
+    61.69959
+  ],
+  "mean_exact_1s_ratio": 0.943185,
+  "total_non_finite_gps": 0,
+  "total_invalid_arc_nodes": 0,
+  "total_invalid_route_arcs": 0,
+  "total_disconnected_route_transitions": 14,
+  "trips_with_gaps_gt_5s": 47,
+  "trips_with_gaps_gt_30s": 30,
+  "max_time_gap_s": 153064.0,
+  "trips_with_isolated_nodes": 0
+}
