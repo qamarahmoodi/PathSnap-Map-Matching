@@ -45,6 +45,7 @@ htmlcov/
 # Large generated outputs (keep small CSV previews and reports)
 outputs/full_candidates/
 outputs/**/*.parquet
+results/**/*.parquet
 
 # IDE & OS
 .vscode/

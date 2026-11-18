@@ -1,0 +1,23 @@
+{
+  "train_trips": 80,
+  "train_observations": 208417,
+  "train_aligned_observations": 184721,
+  "train_label_eligible_observations": 183471,
+  "train_candidate_misses": 1250,
+  "train_total_candidates": 1615009,
+  "train_labeled_candidates": 1484716,
+  "train_positive_candidates": 183471,
+  "train_negative_candidates": 1301245,
+  "student_test_trips": 10,
+  "student_test_observations": 19160,
+  "student_test_aligned_observations": 19103,
+  "student_test_label_eligible_observations": 19074,
+  "student_test_candidate_misses": 29,
+  "student_test_total_candidates": 157851,
+  "student_test_labeled_candidates": 157066,
+  "student_test_positive_candidates": 19074,
+  "student_test_negative_candidates": 137992,
+  "total_extraction_time_s": 139.42,
+  "train_candidate_miss_rate": 0.006767,
+  "student_test_candidate_miss_rate": 0.001518
+}

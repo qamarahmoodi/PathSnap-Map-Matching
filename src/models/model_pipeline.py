@@ -6,6 +6,7 @@ import time
 from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
@@ -32,6 +33,55 @@ from pathsnap.graph.road_graph import TripRoadGraph
 
 
 RANDOM_SEED = 42
+
+
+class SubsampledKNNClassifier(BaseEstimator, ClassifierMixin):
+    """Wrapper around KNeighborsClassifier that deterministically subsamples large training folds
+    above `max_train_samples` so O(N_train * N_query) k-d tree / ball-tree queries remain tractable
+    on 1.48M+ candidate datasets while preserving full-sample training on smaller datasets.
+    """
+
+    def __init__(
+        self,
+        n_neighbors: int = 25,
+        weights: str = "distance",
+        metric: str = "manhattan",
+        max_train_samples: int = 120000,
+        random_state: int = RANDOM_SEED,
+        n_jobs: int = -1,
+    ) -> None:
+        self.n_neighbors = n_neighbors
+        self.weights = weights
+        self.metric = metric
+        self.max_train_samples = max_train_samples
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "SubsampledKNNClassifier":
+        X_arr = np.asarray(X, dtype=np.float32)
+        y_arr = np.asarray(y)
+        n = len(X_arr)
+        if n > self.max_train_samples:
+            rng = np.random.default_rng(self.random_state)
+            idx = rng.choice(n, size=self.max_train_samples, replace=False)
+            idx.sort()
+            X_arr = X_arr[idx]
+            y_arr = y_arr[idx]
+        self.knn_ = KNeighborsClassifier(
+            n_neighbors=self.n_neighbors,
+            weights=self.weights,
+            metric=self.metric,
+            n_jobs=self.n_jobs,
+        )
+        self.knn_.fit(X_arr, y_arr)
+        self.classes_ = self.knn_.classes_
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return self.knn_.predict(np.asarray(X, dtype=np.float32))
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        return self.knn_.predict_proba(np.asarray(X, dtype=np.float32))
 
 
 def get_five_models(random_state: int = RANDOM_SEED) -> Dict[str, Tuple[str, str, Any]]:
@@ -68,10 +118,12 @@ def get_five_models(random_state: int = RANDOM_SEED) -> Dict[str, Tuple[str, str
                     ("scaler", StandardScaler()),
                     (
                         "clf",
-                        KNeighborsClassifier(
+                        SubsampledKNNClassifier(
                             n_neighbors=25,
                             weights="distance",
                             metric="manhattan",
+                            max_train_samples=35000,
+                            random_state=random_state,
                             n_jobs=-1,
                         ),
                     ),
@@ -105,10 +157,11 @@ def get_five_models(random_state: int = RANDOM_SEED) -> Dict[str, Tuple[str, str
                     (
                         "clf",
                         RandomForestClassifier(
-                            n_estimators=120,
+                            n_estimators=100,
                             max_depth=12,
                             min_samples_leaf=15,
                             max_features="sqrt",
+                            max_samples=0.25,
                             n_jobs=-1,
                             random_state=random_state,
                         ),
@@ -191,6 +244,7 @@ def compute_observation_and_route_metrics(
     eval_obs: pd.DataFrame,
     pred_probs: np.ndarray,
     graphs_by_trip: Dict[str, TripRoadGraph],
+    compute_continuity: bool = True,
 ) -> Dict[str, float]:
     """Compute Observation-Level Top-1 Accuracy and Route Continuity on a set of trips."""
     df = eval_cands[
@@ -204,7 +258,7 @@ def compute_observation_and_route_metrics(
             ["trip_id", "observation_id", "pred_prob", "distance_to_segment_m"],
             ascending=[True, True, False, True],
         )
-        .groupby(["trip_id", "observation_id"], as_index=False)
+        .groupby(["trip_id", "observation_id"], as_index=False, sort=False)
         .first()
     )
 
@@ -232,19 +286,25 @@ def compute_observation_and_route_metrics(
     else:
         top1_acc_eligible = float("nan")
 
-    # 3. Route continuity across consecutive observations per trip
+    # 3. Route continuity across consecutive observations per trip (vectorised endpoint check)
     total_transitions = 0
     connected_transitions = 0
-    for tid, grp in merged.groupby("trip_id", sort=False):
-        graph = graphs_by_trip.get(str(tid))
-        if graph is None or len(grp) <= 1:
-            continue
-        arcs_seq = grp["candidate_arc_id"].fillna(-1).to_numpy(dtype=np.int32)
-        for i in range(1, len(arcs_seq)):
-            u, v = int(arcs_seq[i - 1]), int(arcs_seq[i])
-            total_transitions += 1
-            if u >= 0 and v >= 0 and graph.are_connected(u, v):
-                connected_transitions += 1
+    if compute_continuity and graphs_by_trip:
+        for tid, grp in merged.groupby("trip_id", sort=False):
+            graph = graphs_by_trip.get(str(tid))
+            if graph is None or len(grp) <= 1:
+                continue
+            arcs_seq = grp["candidate_arc_id"].fillna(-1).to_numpy(dtype=np.int32)
+            u = arcs_seq[:-1]
+            v = arcs_seq[1:]
+            total_transitions += len(u)
+            valid = (u >= 0) & (v >= 0)
+            if np.any(valid):
+                u_val = u[valid]
+                v_val = v[valid]
+                same_arc = u_val == v_val
+                adj_arc = graph.arc_endpoints[u_val, 1] == graph.arc_endpoints[v_val, 0]
+                connected_transitions += int(np.sum(same_arc | adj_arc))
 
     route_continuity = (
         float(connected_transitions / total_transitions) if total_transitions > 0 else float("nan")
@@ -297,6 +357,7 @@ def evaluate_five_models_group_cv(
     for model_key, (model_name, family, base_estimator) in models.items():
         from sklearn.base import clone
 
+        t_model_start = time.perf_counter()
         oof_probs = np.full(len(candidates_df), np.nan, dtype=np.float64)
         total_train_time = 0.0
         total_infer_time = 0.0
@@ -376,6 +437,11 @@ def evaluate_five_models_group_cv(
             fold_metrics_list.append(f_row)
 
         oof_probs_by_model[model_key] = oof_probs
+        print(
+            f"  [CV {model_name}] 5 folds finished in {time.perf_counter() - t_model_start:.2f}s "
+            f"(train={total_train_time:.2f}s, infer={total_infer_time:.2f}s)",
+            flush=True,
+        )
 
         # Compute overall OOF metrics and mean/std across folds
         lab_mask = candidates_df[CANDIDATE_TARGET_COLUMN].notna().to_numpy()
