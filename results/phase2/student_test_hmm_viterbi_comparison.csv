@@ -1,0 +1,12 @@
+test_type,trip_or_case_id,model_source,num_observations,aligned_observations,greedy_top1_accuracy,viterbi_top1_accuracy,top1_accuracy_delta,greedy_route_continuity,viterbi_route_continuity,continuity_delta,changed_observations_count
+student_test_trip,00000000,Bayesian-Tuned HistGradientBoosting,2503,2503,0.931682,0.954455,0.022773,0.95004,0.995204,0.045164,121
+student_test_trip,00000007,Bayesian-Tuned HistGradientBoosting,1354,1354,0.902511,0.941654,0.039143,0.994087,0.999261,0.005174,119
+student_test_trip,00000009,Bayesian-Tuned HistGradientBoosting,1049,1030,0.732039,0.824272,0.092233,0.837786,0.967557,0.129771,180
+student_test_trip,00000040,Bayesian-Tuned HistGradientBoosting,2995,2995,0.88414,0.933556,0.049416,0.950234,0.992986,0.042752,274
+student_test_trip,00000052,Bayesian-Tuned HistGradientBoosting,262,262,0.90458,0.961832,0.057252,0.934866,0.97318,0.038314,16
+student_test_trip,00000056,Bayesian-Tuned HistGradientBoosting,3958,3925,0.793885,0.889682,0.095797,0.859995,0.973212,0.113217,564
+student_test_trip,00000065,Bayesian-Tuned HistGradientBoosting,768,768,0.778646,0.875,0.096354,0.874837,0.986962,0.112125,127
+student_test_trip,00000076,Bayesian-Tuned HistGradientBoosting,1486,1484,0.768868,0.886792,0.117924,0.843771,0.978451,0.13468,245
+student_test_trip,00000077,Bayesian-Tuned HistGradientBoosting,3911,3908,0.610031,0.79913,0.189099,0.877238,0.986189,0.108951,1339
+student_test_trip,00000091,Bayesian-Tuned HistGradientBoosting,874,874,0.775744,0.898169,0.122425,0.837342,0.981672,0.14433,152
+student_test_aggregate,ALL_10_STUDENT_TEST_TRIPS,Bayesian-Tuned HistGradientBoosting,19160,19103,0.790975,0.887243,0.096268,0.896971,0.9847,0.087728,3137

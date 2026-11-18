@@ -128,6 +128,12 @@ def run_bayesian_tuning_hgb(
                 "trial_time_s": round(elapsed_s, 4),
             }
         )
+        print(
+            f"  [Optuna TPE Trial {trial.number + 1}/{n_trials}] "
+            f"OOF Macro F1={oof_macro_f1:.4f}, LogLoss={oof_ll:.4f}, Top1={obs_metrics['obs_top1_accuracy_aligned']:.4f} "
+            f"({elapsed_s:.1f}s)",
+            flush=True,
+        )
         return oof_macro_f1
 
     sampler = optuna.samplers.TPESampler(seed=random_state, n_startup_trials=3)

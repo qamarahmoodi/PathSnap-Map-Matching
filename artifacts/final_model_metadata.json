@@ -1,0 +1,70 @@
+{
+  "model_name": "Bayesian-Tuned HistGradientBoostingClassifier",
+  "model_key": "hist_gradient_boosting_tuned",
+  "algorithm_family": "Gradient Boosting",
+  "feature_columns": [
+    "distance_to_segment_m",
+    "projection_fraction",
+    "distance_to_start_m",
+    "distance_to_end_m",
+    "segment_length_m",
+    "segment_bearing_deg",
+    "gps_bearing_deg",
+    "bearing_difference_deg",
+    "gps_speed_mps",
+    "delta_time_s",
+    "is_fallback_candidate"
+  ],
+  "id_columns_retained": [
+    "trip_id",
+    "observation_id",
+    "candidate_arc_id",
+    "arc_id",
+    "candidate_rank"
+  ],
+  "classes": [
+    0,
+    1
+  ],
+  "positive_class": 1,
+  "positive_class_meaning": "Candidate road segment matches the vehicle's traversed reference route segment",
+  "random_seed": 42,
+  "training_trips_count": 80,
+  "training_labeled_rows": 1484716,
+  "best_hyperparameters": {
+    "learning_rate": 0.03154749283617478,
+    "max_iter": 200,
+    "max_leaf_nodes": 17,
+    "max_depth": 9,
+    "min_samples_leaf": 40,
+    "l2_regularization": 0.6635129035068437,
+    "random_state": 42
+  },
+  "cv_macro_f1_mean": 0.850489,
+  "oof_macro_f1": 0.848206,
+  "student_test_metrics": {
+    "accuracy": 0.944431,
+    "precision": 0.792524,
+    "recall": 0.73477,
+    "positive_f1": 0.762555,
+    "macro_f1": 0.865544,
+    "log_loss": 0.138567,
+    "obs_top1_accuracy": 0.790975,
+    "obs_top1_eligible": 0.792178,
+    "route_continuity": 0.896971,
+    "tn": 134323,
+    "fp": 3669,
+    "fn": 5059,
+    "tp": 14015,
+    "inference_time_s": 0.2193
+  },
+  "dependencies": {
+    "python": "3.13.1",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "optuna": "5.1.0",
+    "joblib": "1.6.0"
+  },
+  "artifact_sha256": "6f9e74088a7689b3ec8f6e9f3e992d7f0fea42804deb68546fbd1531c88748b1"
+}
