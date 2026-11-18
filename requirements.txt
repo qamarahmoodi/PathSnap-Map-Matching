@@ -1,0 +1,11 @@
+numpy>=1.26
+pandas>=2.0
+pyarrow>=14.0
+shapely>=2.0
+pyproj>=3.6
+scikit-learn>=1.4
+folium>=0.15
+pyyaml>=6.0
+matplotlib>=3.8
+seaborn>=0.13
+pytest>=8.0
