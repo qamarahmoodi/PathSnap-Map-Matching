@@ -134,3 +134,69 @@ def test_ui_live_http_client_strips_forbidden_ground_truth_fields():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_ui_client_against_real_qamar_fastapi_backend():
+    """End-to-end integration test running Qamar's real FastAPI server (`pathsnap.api.app`)
+    in a background Uvicorn thread and verifying Pranav's `PathSnapAPIClient` + `render_dashboard_page`.
+    """
+    import socket
+    import time
+    import uvicorn
+    from pathsnap.api.app import create_app
+
+    # Find an open ephemeral TCP port
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+
+    fastapi_app = create_app(eval_partition="student_test")
+    config = uvicorn.Config(fastapi_app, host="127.0.0.1", port=port, log_level="warning")
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+
+    try:
+        base_url = f"http://127.0.0.1:{port}"
+        client = PathSnapAPIClient(base_url=base_url, mock_mode=False, timeout_s=30.0)
+
+        # Wait up to 10s for uvicorn startup
+        h = None
+        for _ in range(40):
+            h = client.check_health()
+            if h.ok:
+                break
+            time.sleep(0.25)
+
+        assert h is not None and h.ok is True
+        assert h.model_loaded is True
+        assert h.permitted_trip_count == 10
+
+        trips = client.get_trips()
+        assert trips.ok is True
+        assert len(trips.trips) == 10
+        assert any(t["trip_id"] == "00000007" for t in trips.trips)
+
+        pred = client.predict_trip("00000007")
+        assert pred.ok is True
+        assert pred.is_mock is False
+        assert pred.trip_id == "00000007"
+        assert len(pred.reconstructed_route_arcs) > 0
+        assert len(pred.predicted_route_segments_latlon) > 0
+        assert len(pred.gps_points_latlon) == pred.num_observations
+        assert "observation_top1_accuracy" in pred.evaluation_metrics
+        assert "reference_route" not in pred.evaluation_metrics
+
+        page_html = render_dashboard_page(
+            api_base_url=base_url,
+            mock_mode=False,
+            selected_trip_id="00000007",
+            run_prediction=True,
+        )
+        assert "LIVE API MODE (LAPTOP 1 FASTAPI)" in page_html
+        assert "00000007" in page_html
+        assert "ONLINE" in page_html
+    finally:
+        server.should_exit = True
+        thread.join(timeout=5.0)

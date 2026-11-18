@@ -1,7 +1,7 @@
 # PathSnap — Two-Laptop API Contract & Model Scorer Integration Specification
 
 **Authors:** Pranav Shashikiran Atreya (ML Scorer & Laptop 2 Evaluator UI), Qamar Ahmed (Laptop 1 FastAPI Backend & HMM/Viterbi)  
-**Status:** Scorer Interface Frozen & Ready (`src/models/inference.py`); FastAPI Response Schema Proposed (`PROPOSED — Awaiting Qamar's Live Backend Commit`).
+**Status:** **FINAL & INTEGRATED** — Aligned with Qamar's live FastAPI backend (`src/pathsnap/api/app.py`, `src/pathsnap/api/schemas.py`, commit `9c180d7`) and Pranav's `artifacts/best_model.joblib` / `artifacts/final_model.joblib`. See also [`docs/QAMAR_API_HANDOFF.md`](QAMAR_API_HANDOFF.md).
 
 ---
 
