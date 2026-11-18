@@ -2,9 +2,9 @@
 
 **Course:** UE24CS352A Machine Learning Hackathon (PES University)  
 **Team Members:**
-- **Qamar Ahmed (Technical Lead):** Spatial projection (`LocalTangentProjector`), `Shapely 2.x STRtree` candidate generation, causal feature engineering, monotonic DP reference alignment, `TripRoadGraph`.
-- **Pranav Shashikiran Atreya (ML Engineering):** Five-model `GroupKFold` training & comparison pipeline, Optuna TPE Bayesian hyperparameter optimisation, HMM & Viterbi route reconstruction.
-- **L A Gokul (Data Engineering & Visualisation):** Raw dataset ingestion, 90-trip integrity auditing, exploratory data analysis, Folium interactive maps.
+- **Qamar Ahmed (**PES2UG24CS904**) (Technical Lead):** Spatial projection (`LocalTangentProjector`), `Shapely 2.x STRtree` candidate generation, causal feature engineering, monotonic DP reference alignment, `TripRoadGraph`.
+- **Pranav Shashikiran Atreya (**PES2UG24CS912**) (ML Engineering):** Five-model `GroupKFold` training & comparison pipeline, Optuna TPE Bayesian hyperparameter optimisation, HMM & Viterbi route reconstruction.
+- **L A Gokul (**PES2UG24CS246**) (Data Engineering & Visualisation):** Raw dataset ingestion, 90-trip integrity auditing, exploratory data analysis, Folium interactive maps.
 
 ---
 
