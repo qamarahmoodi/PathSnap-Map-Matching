@@ -84,6 +84,24 @@ def build_prediction_folium_map_html(pred: PredictResponse) -> str:
         ).add_to(fg_gps)
         fg_gps.add_to(m)
 
+    if pred.classifier_only_route_segments_latlon:
+        fg_cls = folium.FeatureGroup(name="Classifier-Only Route (Greedy Top-1)", show=False)
+        for idx, seg in enumerate(pred.classifier_only_route_segments_latlon):
+            arc_lbl = (
+                pred.classifier_only_route_arcs[idx]
+                if idx < len(pred.classifier_only_route_arcs)
+                else idx
+            )
+            folium.PolyLine(
+                seg,
+                color="#f59e0b",
+                weight=4,
+                opacity=0.8,
+                dash_array="6",
+                tooltip=f"Classifier-Only Arc {arc_lbl}",
+            ).add_to(fg_cls)
+        fg_cls.add_to(m)
+
     if pred.predicted_route_segments_latlon:
         fg_pred = folium.FeatureGroup(name="Predicted Route (ML + HMM/Viterbi)", show=True)
         for idx, seg in enumerate(pred.predicted_route_segments_latlon):
@@ -177,10 +195,11 @@ def render_dashboard_page(
                 else ""
             )
             metrics = pred_resp.evaluation_metrics or {}
-            top1_str = f"{float(metrics['observation_top1_accuracy']) * 100:.2f}%" if "observation_top1_accuracy" in metrics else "Server-Side / Pending"
-            f1_str = f"{float(metrics['macro_f1']):.4f}" if "macro_f1" in metrics else "Server-Side / Pending"
-            cont_str = f"{float(metrics['route_continuity']) * 100:.2f}%" if "route_continuity" in metrics else "Server-Side / Pending"
-            miss_str = f"{float(metrics['candidate_miss_rate']) * 100:.2f}%" if "candidate_miss_rate" in metrics else "Server-Side / Pending"
+            top1_str = f"{float(metrics['observation_top1_accuracy']) * 100:.2f}%" if "observation_top1_accuracy" in metrics and metrics["observation_top1_accuracy"] is not None else "Server-Side / N/A"
+            greedy_top1_str = f"{float(metrics['classifier_only_top1_accuracy']) * 100:.2f}%" if "classifier_only_top1_accuracy" in metrics and metrics["classifier_only_top1_accuracy"] is not None else "Server-Side / N/A"
+            f1_str = f"{float(metrics['macro_f1']):.4f}" if "macro_f1" in metrics and metrics["macro_f1"] is not None else "Server-Side / N/A"
+            cont_str = f"{float(metrics['route_continuity']) * 100:.2f}%" if "route_continuity" in metrics and metrics["route_continuity"] is not None else "Server-Side / N/A"
+            miss_str = f"{float(metrics['candidate_miss_rate']) * 100:.2f}%" if "candidate_miss_rate" in metrics and metrics["candidate_miss_rate"] is not None else "Server-Side / N/A"
 
             map_iframe_html = ""
             if pred_resp.predicted_route_segments_latlon or pred_resp.gps_points_latlon:
@@ -205,8 +224,12 @@ def render_dashboard_page(
                 </div>
                 <div class="metrics-grid">
                     <div class="metric-box">
-                        <div class="metric-label">Observation Top-1 Accuracy</div>
+                        <div class="metric-label">HMM/Viterbi Top-1 Acc</div>
                         <div class="metric-value">{html.escape(top1_str)}</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Classifier-Only Top-1</div>
+                        <div class="metric-value">{html.escape(greedy_top1_str)}</div>
                     </div>
                     <div class="metric-box">
                         <div class="metric-label">Candidate Macro F1</div>
@@ -221,12 +244,8 @@ def render_dashboard_page(
                         <div class="metric-value">{html.escape(miss_str)}</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-label">GPS Observations Matched</div>
-                        <div class="metric-value">{pred_resp.num_observations:,}</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Reconstructed Route Arcs</div>
-                        <div class="metric-value">{len(pred_resp.reconstructed_route_arcs):,}</div>
+                        <div class="metric-label">Observations / Arcs</div>
+                        <div class="metric-value">{pred_resp.num_observations:,} / {len(pred_resp.reconstructed_route_arcs):,}</div>
                     </div>
                 </div>
                 <div style="margin-top:14px;">

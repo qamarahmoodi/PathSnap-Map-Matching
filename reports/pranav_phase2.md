@@ -166,12 +166,18 @@ Using the Bayesian-Tuned HistGradientBoosting emission probabilities (`results/p
 
 ---
 
-## 7. Section 7 — Laptop 2 Evaluator UI & Model Scorer Handover
+## 7. Section 7 — Laptop 2 Evaluator UI, Live API Integration & Handover
 
 1. **Frozen Model Scorer Interface ([`src/models/inference.py`](../src/models/inference.py) & [`src/models/scorer.py`](../src/models/scorer.py)):**
-   - Serialized final artifact: [`artifacts/final_model.joblib`](../artifacts/final_model.joblib) (`432,867` bytes, SHA-256 `6f9e74088a7689b3ec8f6e9f3e992d7f0fea42804deb68546fbd1531c88748b1`) + [`artifacts/final_model_metadata.json`](../artifacts/final_model_metadata.json).
+   - Serialized final artifacts: [`artifacts/final_model.joblib`](../artifacts/final_model.joblib), [`artifacts/best_model.joblib`](../artifacts/best_model.joblib), [`artifacts/final_tuned_model.joblib`](../artifacts/final_tuned_model.joblib) (each containing both `"model"` and `"estimator"` keys for direct compatibility with Qamar's `CandidateModelScorer.from_path()`), and [`artifacts/final_model_metadata.json`](../artifacts/final_model_metadata.json).
    - Provides `load_model_bundle()` and `score_candidates(candidates_df, model_bundle)` preserving `trip_id`, `observation_id`, `candidate_arc_id`, `arc_id`, `candidate_rank`, and outputting `predicted_probability`, `pred_prob`, `predicted_log_probability`, `predicted_label`, and `is_obs_top1`.
-2. **Laptop 2 Evaluator UI ([`src/ui/app.py`](../src/ui/app.py) & [`src/ui/api_client.py`](../src/ui/api_client.py)):**
-   - Connects over the LAN to Laptop 1's FastAPI server via `PATHSNAP_API_BASE_URL` (`GET /health`, `GET /trips`, `POST /predict`).
-   - Strictly client-side: never loads local models, never reads dataset files, and automatically strips any accidental reference-route fields from responses (`test_ui_live_http_client_strips_forbidden_ground_truth_fields`).
-   - Supports both **Live API Mode** and a clearly badged **Mock Contract Preview Mode** (`PATHSNAP_UI_MOCK_MODE=true`).
+2. **Laptop 2 Evaluator UI & Live Backend Integration ([`src/ui/app.py`](../src/ui/app.py) & [`src/ui/api_client.py`](../src/ui/api_client.py)):**
+   - Integrated and verified end-to-end against Qamar's live FastAPI backend (`src/pathsnap/api/app.py`, commit `9c180d7`, merged via `origin/main` `504e883`) on `GET /health`, `GET /trips`, and `POST /predict` (`test_ui_client_against_real_qamar_fastapi_backend`).
+   - Live HTTP smoke check against `pathsnap.api.app` loading `artifacts/best_model.joblib` (`HistGradientBoostingClassifier`) on `student_test` Trip `00000007`:
+     - `GET /health`: HTTP `200`, `status="ok"`, `ready=True`, `model_loaded=True`, `permitted_trip_count=10`.
+     - `GET /trips`: HTTP `200`, returned `10` permitted trip options without exposing `.route`.
+     - `POST /predict` (`{"trip_id": "00000007"}`): HTTP `200` in `739.3–783.2 ms` (`score_ms=18.5–37.3 ms`), reconstructing `124` route arcs across `1,354` GPS observations (`94.17%` HMM/Viterbi Top-1 Acc vs `90.25%` Classifier-Only, `0.9293` Macro F1, `99.93%` Viterbi route continuity, `0.00%` miss rate).
+   - **Live UI Screenshot:** [`reports/assets/laptop2_evaluator_ui_live.png`](assets/laptop2_evaluator_ui_live.png) (captured via headless Microsoft Edge directly from the live UI connected to the running FastAPI backend).
+   - **Two-Laptop Network Configuration & Remaining Physical Verification:** Laptop 2 UI launches on port `8501` (`$env:PATHSNAP_API_BASE_URL="http://<LAPTOP1_LAN_IP>:8000"; .\.venv\Scripts\python.exe src/ui/app.py`) with zero local model loading and strict stripping of any ground-truth fields. Loopback live FastAPI ↔ UI integration is verified; physical two-laptop LAN testing awaits running Laptop 1 and Laptop 2 together on the evaluation network.
+3. **Gokul Consolidated Handover Archive:**
+   - All 12 out-of-fold and `student_test` prediction Parquet files (`results/phase2/predictions/`), CSV/JSON logs, PNG plots, model artifacts, and `reports/pranav_phase2.md` are packaged outside Git at `C:\Users\Pranav S Atreya\PES\sem5\ML\hackathon\Pranav_Phase2_Gokul_Handoff.zip`.
