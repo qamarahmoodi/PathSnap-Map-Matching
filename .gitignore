@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Pytest / Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Raw Datasets and Large Zips (keep outside repo or ignored)
+*.zip
+Student folder/
+PathSnap_student_materials/
+data/raw/
+data/processed/*.parquet
+data/processed/*.feather
+
+# Secrets / Environment variables
+.env
+*.pem
+*.key
