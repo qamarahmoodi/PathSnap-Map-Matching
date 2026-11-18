@@ -65,3 +65,48 @@ def test_generate_trip_candidates_schema_and_invariants():
     assert cands["label"].isna().all()
     assert (obs["alignment_status"] == "not_available").all()
     assert (~obs["label_eligible"]).all()
+
+
+def test_gps_kinematics_gap_and_nonpositive_dt_handling():
+    """Verify that positive GPS gaps > 30s retain delta_time_s while masking speed/bearing,
+    and non-positive dt <= 0 masks delta_time_s, speed, and bearing to NaN.
+    """
+    from pathsnap.features.feature_engineering import compute_gps_kinematics
+
+    pts_xy = np.array(
+        [
+            [0.0, 0.0],
+            [10.0, 0.0],    # obs 1: normal 1s step, 10m east (speed=10m/s, bearing=90 deg)
+            [11.0, 0.0],    # obs 2: 1s step, 1m east (<2.5m stationary jitter -> bearing NaN, speed=1m/s)
+            [200.0, 0.0],   # obs 3: 45s gap (>30s -> delta_time_s=45.0, speed=NaN, bearing=NaN)
+            [205.0, 0.0],   # obs 4: duplicate timestamp dt=0 (-> delta_time_s=NaN, speed=NaN, bearing=NaN)
+        ],
+        dtype=np.float64,
+    )
+    ts = np.array([1.0, 2.0, 3.0, 48.0, 48.0], dtype=np.float64)
+    kin = compute_gps_kinematics(pts_xy, ts, CandidateConfig())
+
+    # Obs 0: all NaN
+    assert np.isnan(kin.delta_time_s[0])
+    assert np.isnan(kin.gps_speed_mps[0])
+    assert np.isnan(kin.gps_bearing_deg[0])
+
+    # Obs 1: normal 1s step
+    assert np.isclose(kin.delta_time_s[1], 1.0)
+    assert np.isclose(kin.gps_speed_mps[1], 10.0)
+    assert np.isclose(kin.gps_bearing_deg[1], 90.0)
+
+    # Obs 2: stationary jitter (< 2.5m) -> speed finite, bearing NaN
+    assert np.isclose(kin.delta_time_s[2], 1.0)
+    assert np.isclose(kin.gps_speed_mps[2], 1.0)
+    assert np.isnan(kin.gps_bearing_deg[2])
+
+    # Obs 3: large positive gap (45s > 30s) -> delta_time_s retained (45.0), speed & bearing NaN
+    assert np.isclose(kin.delta_time_s[3], 45.0)
+    assert np.isnan(kin.gps_speed_mps[3])
+    assert np.isnan(kin.gps_bearing_deg[3])
+
+    # Obs 4: duplicate timestamp (dt == 0) -> delta_time_s, speed, and bearing all NaN
+    assert np.isnan(kin.delta_time_s[4])
+    assert np.isnan(kin.gps_speed_mps[4])
+    assert np.isnan(kin.gps_bearing_deg[4])

@@ -29,8 +29,11 @@ def compute_gps_kinematics(
 
     Rules:
     - Observation 0 has NaN for `delta_time_s`, `gps_speed_mps`, and `gps_bearing_deg`.
-    - If `dt <= 0` or `dt > config.max_valid_delta_time_s`, speed and bearing are set to NaN so
-      long GPS dropouts or duplicate timestamps never fabricate artificial velocities.
+    - If `dt <= 0` (duplicate or non-monotonic timestamp), `delta_time_s`, `gps_speed_mps`, and
+      `gps_bearing_deg` are set to NaN.
+    - If `dt > config.max_valid_delta_time_s`, `delta_time_s` retains the positive elapsed time gap
+      (so downstream models and sequence decoders can detect GPS dropouts), while `gps_speed_mps` and
+      `gps_bearing_deg` are set to NaN so long dropouts never fabricate artificial velocities.
     - If step displacement `< config.min_displacement_for_bearing_m` (e.g., stationary jitter),
       `gps_bearing_deg` is set to NaN because direction of static GPS noise is meaningless.
     """
@@ -54,7 +57,7 @@ def compute_gps_kinematics(
     dy = np.diff(pts_xy_m[:, 1])
     disp_raw = np.hypot(dx, dy)
 
-    delta_time[1:] = dt_raw.astype(np.float32)
+    delta_time[1:] = np.where(dt_raw > 0.0, dt_raw, np.nan).astype(np.float32)
     displacement[1:] = disp_raw.astype(np.float32)
 
     valid_dt = (dt_raw > 0.0) & (dt_raw <= config.max_valid_delta_time_s)
