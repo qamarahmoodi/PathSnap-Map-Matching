@@ -1,0 +1,39 @@
+{
+  "evaluation_scope": "Held-out student_test (10 trips, 19,160 GPS observations)",
+  "num_trips": 10,
+  "total_observations": 19160,
+  "total_aligned_observations": 19103,
+  "total_candidates_generated": 157851,
+  "candidate_miss_count": 29,
+  "candidate_miss_rate": 0.0015180861644767838,
+  "candidate_recall": 0.9984819138355232,
+  "classifier_only": {
+    "mean_top1_accuracy": 0.6356518,
+    "std_top1_accuracy": 0.17831615233175035,
+    "mean_route_continuity": 0.8382350000000001,
+    "std_route_continuity": 0.0868063791434708,
+    "mean_route_arc_f1": 0.6395182
+  },
+  "classifier_plus_hmm": {
+    "mean_top1_accuracy": 0.7361545999999999,
+    "std_top1_accuracy": 0.15316109914378823,
+    "mean_route_continuity": 0.9511285,
+    "std_route_continuity": 0.038848849149978396,
+    "mean_multihop_reachability": 0.9982234,
+    "mean_route_arc_f1": 0.8206756000000001
+  },
+  "empirical_gains": {
+    "mean_top1_accuracy_delta": 0.10050269999999999,
+    "max_top1_accuracy_delta": 0.216505,
+    "mean_route_continuity_delta": 0.11289350000000001,
+    "max_route_continuity_delta": 0.187023,
+    "trips_improved_top1": 10,
+    "trips_improved_continuity": 10
+  },
+  "latency_benchmarks": {
+    "mean_total_pipeline_ms_per_trip": 3221.0101999999997,
+    "mean_model_scoring_ms_per_trip": 61.921199999999985,
+    "mean_viterbi_decoding_ms_per_trip": 2876.0092,
+    "mean_latency_per_obs_ms": 1.681111795407098
+  }
+}

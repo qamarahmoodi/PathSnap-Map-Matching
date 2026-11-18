@@ -1,0 +1,28 @@
+PathSnap detailed data-quality analysis
+Trips analyzed successfully: 90
+Trips with loader/analysis errors: 0
+
+Totals across successfully analyzed trips:
+track_longitude_nonfinite: 0
+track_latitude_nonfinite: 0
+track_timestamp_nonfinite: 0
+node_longitude_nonfinite: 0
+node_latitude_nonfinite: 0
+arc_from_node_nonfinite: 0
+arc_to_node_nonfinite: 0
+route_arc_id_nonfinite: 0
+gps_invalid_coordinate_rows: 0
+node_invalid_coordinate_rows: 0
+invalid_arc_endpoint_rows: 0
+invalid_route_arc_ids: 0
+timestamp_gaps_gt_1_5_stored_units: 7537
+timestamp_non_increasing_transitions: 0
+isolated_nodes: 0
+reference_route_discontinuities: 14
+
+Notes:
+- Timestamp gap units are the same as the timestamp units stored in .track.
+- The >1.5 threshold is applied directly to stored timestamp differences.
+- Graph components are weakly connected components (arc direction ignored).
+- Route continuity checks whether consecutive valid route arcs share an end/start node.
+- student_test is profiled for data quality only; it is not used for model training.
